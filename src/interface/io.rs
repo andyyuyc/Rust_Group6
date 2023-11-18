@@ -75,7 +75,7 @@ pub fn get_path(hash: Hash) -> PathBuf {
         .join(format!("{}.obj", postfix))
 }
 
-pub fn get_branch(branch: &str) -> io::Result<Hash> {
+pub fn get_repository_path() -> io::Result<PathBuf> {
     todo!()
 }
 

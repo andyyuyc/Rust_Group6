@@ -102,7 +102,8 @@ fn process_revisions(dir: Directory, changes: &Vec<Change>) -> io::Result<Direct
                     let hash = process_addition(path)?;
                     let blob_ref = BlobRef::new(path, hash);
                     acc.insert_file_ref(&PathBuf::from(path), blob_ref)
-                        .ok_or(io::Error::new(io::ErrorKind::Other, "Invalid Path"))?;
+                        .ok_or(io::Error::new(io::ErrorKind::Other, "Failed to insert file ref"))?;
+                    println!("Added change {}", path);
                 },
                 // I guess remove would be used in case there is a move of a file?
                 Change::Remove { path } => {

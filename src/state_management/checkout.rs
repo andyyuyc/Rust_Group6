@@ -1,7 +1,7 @@
 use std::{io::{self, Write, Error}, fs::File};
 use crate::file_management::{hash::Hash, commit::{self, commit}};
 
-use crate::{interface::io::{get_branch, get_serialized_object, get_object}, file_management::{commit::Commit, hash::DVCSHash, directory::Directory}};
+use crate::{interface::io::{get_serialized_object, get_object}, file_management::{commit::Commit, hash::DVCSHash, directory::Directory}};
 
 fn checkout(hash: Hash) -> io::Result<()> {
     // Grab the hash of the branch from 
@@ -9,6 +9,7 @@ fn checkout(hash: Hash) -> io::Result<()> {
 
     // Move the head to the branch (set it to the hash)
 
+    // Remove the files in the current directory
 
     // Get the directory to reconstruct from and then reconstruct the files
     let directory: Directory = get_serialized_object(commit.get_dir_hash())?;
@@ -19,6 +20,7 @@ fn checkout(hash: Hash) -> io::Result<()> {
 
             // Reconstruct the directory structure
             // Might throw an error if there is no parent
+            println!("Directory Path: {}", &dir_path.display());
             std::fs::create_dir_all(&dir_path.parent().unwrap())?;
                     
             // Recreate the file and copy the data to it
@@ -42,9 +44,10 @@ fn checkout_test() {
     
     changes.push(commit::Change::Add {path: "test/test.txt"});
     changes.push(commit::Change::Add {path: "test/test2.txt"});
-    changes.push(commit::Change::Add {path: "test/chigen/chigen.txt" });
+    changes.push(commit::Change::Add {path: "test/idk/something.txt" });
 
     let commit = commit("Justin", None, &changes, "Initial commit").unwrap();
 
+    std::fs::remove_dir_all("test");
     checkout(commit.get_hash());
 }
