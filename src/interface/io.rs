@@ -1,8 +1,10 @@
-use std::{io::{self, Write, Read}, fs::{File, read_to_string}, path::PathBuf};
-use serde::{Serialize, de::DeserializeOwned};
+use std::{io::{self, Write, Read}, fs::File, path::PathBuf};
+use serde::{Serialize, de::DeserializeOwned, Deserialize};
 use crate::file_management::hash::Hash;
 use crate::file_management::hash::DVCSHash;
 
+// Adds a serialized object to the hashed path. If the object already exists
+// no copying is performed
 pub fn add_serialized_object<T>(obj: &T) -> io::Result<()> 
     where T: DVCSHash + Serialize
 {
@@ -14,6 +16,7 @@ pub fn add_serialized_object<T>(obj: &T) -> io::Result<()>
     Ok(())
 }
 
+// Retrieves the serialized string from the hashed path
 pub fn get_serialized_object<T: DeserializeOwned>(hash: Hash) -> io::Result<T> {
     // Get serialized string
     let data = get_object(hash)?;
@@ -26,6 +29,8 @@ pub fn get_serialized_object<T: DeserializeOwned>(hash: Hash) -> io::Result<T> {
         ))
 }
 
+// Adds an object to the hashed path. If the object already exists,
+// no copying is performed
 pub fn add_object(hash: Hash, data: &[u8]) -> io::Result<()> {
     // Get file path
     let path = get_path(hash);
@@ -47,6 +52,7 @@ pub fn add_object(hash: Hash, data: &[u8]) -> io::Result<()> {
     Ok(())
 }
 
+// Retrieves the data stored in the object at the hashed path
 pub fn get_object(hash: Hash) -> io::Result<Vec<u8>> {
     // Get file path
     let path = get_path(hash);
@@ -59,7 +65,8 @@ pub fn get_object(hash: Hash) -> io::Result<Vec<u8>> {
     Ok(data)
 }
 
-fn get_path(hash: Hash) -> PathBuf {
+// Gets the path associated with the hash
+pub fn get_path(hash: Hash) -> PathBuf {
     let hash = hash.as_string();
     let prefix = &hash[0..2];
     let postfix = &hash[2..];
@@ -68,8 +75,33 @@ fn get_path(hash: Hash) -> PathBuf {
         .join(format!("{}.obj", postfix))
 }
 
+pub fn get_branch(branch: &str) -> io::Result<Hash> {
+    todo!()
+}
+
 #[test]
-fn create_dir_test() {
-    let dir_path = PathBuf::from("potato/pot.txt");
-    std::fs::create_dir_all(&dir_path.parent().unwrap());
+fn test1() {
+    #[derive(Serialize, Deserialize)]
+    struct TestStruct {
+        data: String
+    }
+
+    impl DVCSHash for TestStruct {
+        fn get_hash(&self) -> Hash {
+            Hash::new(&self.data)
+        }
+    }
+
+    let test_struct = TestStruct {data: String::from("hello")};
+    add_serialized_object(&test_struct);
+
+    let path = get_path(test_struct.get_hash());
+    let mut file = File::open(path).unwrap();
+    let mut s = String::new();
+    file.read_to_string(&mut s);
+
+    assert_eq!(r#"{"data":"hello"}"#, s);
+
+    let deserialized_object: TestStruct = get_serialized_object(test_struct.get_hash()).unwrap();
+    assert_eq!(deserialized_object.data, "hello")
 }

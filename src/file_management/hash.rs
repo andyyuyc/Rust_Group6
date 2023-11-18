@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use sha256::{digest};
+use sha256::digest;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Hash(String);

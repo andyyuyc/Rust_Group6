@@ -106,7 +106,9 @@ fn serialize_blob_test() {
 }
 
 #[test]
-fn serde_directory_test() {
+fn test1() {
+    use sha256::digest;
+
     let mut directory = Directory::new();
 
     let path1 = PathBuf::from("file1");
@@ -124,8 +126,8 @@ fn serde_directory_test() {
     println!("Deserialized: {:?}", deserialized_dir);
 
     let blob_ref = deserialized_dir.get_file_ref(&PathBuf::from("file1")).unwrap();
-    assert_eq!(blob_ref.get_content_hash().as_string(), "od-file1-hash");
+    assert_eq!(blob_ref.get_content_hash().as_string(), digest("od-file1-hash"));
 
     let blob_ref2 = deserialized_dir.get_file_ref(&PathBuf::from("something/file2")).unwrap();
-    assert_eq!(blob_ref2.get_content_hash().as_string(), "od-filein-hash");
+    assert_eq!(blob_ref2.get_content_hash().as_string(), digest("od-filein-hash"));
 }

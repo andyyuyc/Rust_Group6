@@ -1,5 +1,4 @@
-use std::{io::{self, Read, Write}, path::PathBuf, fs::File};
-use sha256::{try_digest, digest};
+use std::{io::{self, Read}, path::PathBuf, fs::File};
 
 use serde::{Serialize, Deserialize};
 use crate::{file_management::hash::Hash, interface::io::{get_serialized_object, add_serialized_object, add_object}};
@@ -19,6 +18,12 @@ pub struct Commit {
     author: String,
     message: String,
     time_stamp: String,
+}
+
+impl Commit {
+    pub fn get_dir_hash(&self) -> Hash {
+        self.dir_hash.clone()
+    }
 }
 
 impl DVCSHash for Commit {
@@ -81,7 +86,7 @@ pub fn commit(
     };
 
     // Serialize the commit
-    let commit_hash = add_serialized_object(&commit)?;
+    add_serialized_object(&commit)?;
 
     Ok(commit)
 }
@@ -117,18 +122,12 @@ fn process_addition(path:&str) -> io::Result<Hash> {
     // Open the added file and read the data to a vector
     let mut file = File::open(&add_path)?;
     let mut data = Vec::new();
-    file.read_to_end(&mut data);
+    file.read_to_end(&mut data)?;
 
     // Hash the data and add it as a blob
     let hash = Hash::from(&data);
     add_object(hash.clone(), &data)?;
 
     Ok(hash)
-}
-
-#[test]
-fn process_addition_test() {
-    let hash = process_addition("Cargo.toml").unwrap();
-    assert_eq!(hash.as_string(), "b9d455535062119085347d07b691e25085ce7b4957630084bb5c7435953f59bc")
 }
 
