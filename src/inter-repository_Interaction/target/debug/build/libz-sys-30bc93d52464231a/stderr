@@ -1,2 +1,0 @@
-error: cannot parse the debug map for '/dev/null': The file was not recognized as a valid object file
-clang: error: dsymutil command failed with exit code 1 (use -v to see invocation)
