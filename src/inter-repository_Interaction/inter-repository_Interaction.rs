@@ -1,80 +1,52 @@
+use git2::{Repository, MergeOptions, FetchOptions, RemoteCallbacks, Cred};
 use std::io;
 use std::path::Path;
-use std::process::Command;
-
-
-fn is_valid_dir_path(dir_path: &str) -> bool {
-    let path = Path::new(dir_path);
-    path.exists() && path.is_dir()
-}
-
-fn is_valid_branch(branch_name: &str) -> bool {
-    !branch_name.is_empty() 
-}
 
 fn pull_changes(remote_repo_path: &str, local_branch: &str) -> io::Result<()> {
-    if is_valid_dir_path(remote_repo_path) && is_valid_branch(local_branch) {
-        let status = Command::new("git")
-            .arg("pull")
-            .arg(remote_repo_path)
-            .arg(local_branch)
-            .status()?;
+    let repo = Repository::open(Path::new("."))?;
+    let mut remote = repo.find_remote(remote_repo_path)?;
 
-        if status.success() {
-            Ok(())
-        } else {
-            Err(io::Error::new(io::ErrorKind::Other, "Failed to pull changes"))
-        }
+    let mut fo = FetchOptions::new();
+    let mut callbacks = RemoteCallbacks::new();
+    callbacks.credentials(|_url, username_from_url, _allowed_types| {
+        Cred::ssh_key(username_from_url.unwrap(), None, Path::new("~/.ssh/id_rsa"), None)
+    });
+    fo.remote_callbacks(callbacks);
+
+    remote.fetch(&[local_branch], Some(&mut fo), None)?;
+
+    let fetch_head = repo.find_reference("FETCH_HEAD")?;
+    let fetch_commit = repo.reference_to_annotated_commit(&fetch_head)?;
+
+    let (analysis, _) = repo.merge_analysis(&[&fetch_commit])?;
+
+    if analysis.is_up_to_date() {
+        println!("Already up to date!");
+    } else if analysis.is_fast_forward() {
+        let refname = format!("refs/heads/{}", local_branch);
+        let mut reference = repo.find_reference(&refname)?;
+        reference.set_target(fetch_commit.id(), "Fast-Forward")?;
+        repo.set_head(&refname)?;
+        repo.checkout_head(None)?;
     } else {
-        Err(io::Error::new(io::ErrorKind::NotFound, "Invalid path or branch"))
+        println!("Non-fast-forward updates are not supported in this example.");
     }
+
+    Ok(())
 }
 
 fn push_changes(local_repo_path: &str, remote_branch: &str) -> io::Result<()> {
-    if is_valid_dir_path(local_repo_path) && is_valid_branch(remote_branch) {
-        let status = Command::new("git")
-            .current_dir(local_repo_path)
-            .arg("push")
-            .arg("origin")
-            .arg(remote_branch)
-            .status()?;
+    let repo = Repository::open(Path::new(local_repo_path))?;
+    let mut remote = repo.find_remote("origin")?;
 
-        if status.success() {
-            Ok(())
-        } else {
-            Err(io::Error::new(io::ErrorKind::Other, "Failed to push changes"))
-        }
-    } else {
-        Err(io::Error::new(io::ErrorKind::NotFound, "Invalid path or branch"))
-    }
-}
+    let mut push_options = git2::PushOptions::new();
+    let mut callbacks = RemoteCallbacks::new();
+    callbacks.credentials(|_url, username_from_url, _allowed_types| {
+        Cred::ssh_key(username_from_url.unwrap(), None, Path::new("~/.ssh/id_rsa"), None)
+    });
+    push_options.remote_callbacks(callbacks);
 
-fn detect_changes(local_repo_path: &str, remote_repo_path: &str) -> io::Result<()> {
-    if is_valid_dir_path(local_repo_path) && is_valid_dir_path(remote_repo_path) {
-        let status = Command::new("git")
-            .current_dir(local_repo_path)
-            .arg("diff")
-            .arg(remote_repo_path)
-            .status()?;
+    remote.push(&[&format!("refs/heads/{}:refs/heads/{}", local_repo_path, remote_branch)], Some(&mut push_options))?;
 
-        if status.success() {
-            Ok(())
-        } else {
-            Err(io::Error::new(io::ErrorKind::Other, "Failed to detect changes"))
-        }
-    } else {
-        Err(io::Error::new(io::ErrorKind::NotFound, "Invalid path"))
-    }
-}
-
-fn synchronize_changes(local_repo_path: &str, remote_repo_path: &str) -> io::Result<()> {
-    if is_valid_dir_path(local_repo_path) && is_valid_dir_path(remote_repo_path) {
-        pull_changes(remote_repo_path, "master")?;
-
-        push_changes(local_repo_path, "master")?;
-
-        Ok(())
-    } else {
-        Err(io::Error::new(io::ErrorKind::NotFound, "Invalid path"))
-    }
+    Ok(())
 }
