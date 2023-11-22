@@ -1,4 +1,4 @@
-use git2::{Repository, MergeOptions, FetchOptions, RemoteCallbacks, Cred};
+use git2::{Repository, MergeOptions, FetchOptions, RemoteCallbacks, Cred, Error};
 use std::io;
 use std::path::Path;
 
@@ -47,6 +47,38 @@ fn push_changes(local_repo_path: &str, remote_branch: &str) -> io::Result<()> {
     push_options.remote_callbacks(callbacks);
 
     remote.push(&[&format!("refs/heads/{}:refs/heads/{}", local_repo_path, remote_branch)], Some(&mut push_options))?;
+
+    Ok(())
+}
+
+
+fn detect_changes(local_repo_path: &str, remote_repo_path: &str) -> Result<(), Error> {
+    let repo = Repository::open(Path::new(local_repo_path))?;
+    let remote = repo.find_remote(remote_repo_path)?;
+    repo.fetch(&[remote.name().unwrap()], None, None)?;
+
+    let local_head = repo.head()?.peel_to_commit()?;
+    let remote_head = repo.find_reference("FETCH_HEAD")?.peel_to_commit()?;
+
+    if local_head.id() != remote_head.id() {
+        println!("Changes detected.");
+    } else {
+        println!("No changes detected.");
+    }
+
+    Ok(())
+}
+
+fn synchronize_changes(local_repo_path: &str, remote_repo_path: &str) -> Result<(), Error> {
+    let repo = Repository::open(Path::new(local_repo_path))?;
+    let mut remote = repo.find_remote(remote_repo_path)?;
+
+    remote.fetch(&["master"], None, None)?;
+    let fetch_head = repo.find_reference("FETCH_HEAD")?.peel_to_commit()?;
+    repo.set_head_detached(fetch_head.id())?;
+    repo.checkout_head(Some(git2::build::CheckoutBuilder::new().force()))?;
+
+    remote.push(&["refs/heads/master:refs/heads/master"], None)?;
 
     Ok(())
 }
