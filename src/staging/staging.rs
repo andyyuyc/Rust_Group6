@@ -1,6 +1,7 @@
 use std::fs::{self, File};
 use std::io;
 use std::path::{Path, PathBuf};
+use std::env;
 
 // Adds a file to the staging area
 pub fn stage_add(repository_path: &str, file_path: &str) -> io::Result<()> {
@@ -43,5 +44,35 @@ fn validate_repository_path(repo_path: &Path) -> io::Result<()> {
     if !repo_path.exists() || !repo_path.is_dir() {
         return Err(io::Error::new(io::ErrorKind::NotFound, "Invalid repository path"));
     }
+    Ok(())
+}
+
+fn main() -> io::Result<()> {
+    let args: Vec<String> = env::args().collect();
+
+    if args.len() < 4 {
+        eprintln!("Usage: {} <repository_path> <add/remove> <file_path>", args[0]);
+        return Err(io::Error::new(io::ErrorKind::InvalidInput, "Insufficient arguments"));
+    }
+
+    let repository_path = &args[1];
+    let command = &args[2];
+    let file_path = &args[3];
+
+    match command.as_str() {
+        "add" => {
+            stage_add(repository_path, file_path)?;
+            println!("File successfully added to the staging area.");
+        },
+        "remove" => {
+            stage_remove(repository_path, file_path)?;
+            println!("File successfully removed from the staging area.");
+        },
+        _ => {
+            eprintln!("Invalid command: {}", command);
+            return Err(io::Error::new(io::ErrorKind::InvalidInput, "Invalid command"));
+        }
+    }
+
     Ok(())
 }
