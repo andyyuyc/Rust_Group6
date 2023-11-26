@@ -1,6 +1,6 @@
 use std::io;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 enum Permission {
     Read,
     Write,
@@ -21,4 +21,22 @@ fn verify_permissions(user: &str, file_path: &str, permission: Permission) -> io
     }
 
     Ok(())
+}
+
+fn main() {
+    let tests = vec![
+        ("valid_user", "valid_path", Permission::Read),
+        ("valid_user", "valid_path", Permission::Execute),
+        ("", "valid_path", Permission::Write),
+        ("valid_user", "", Permission::Execute),
+        ("valid_user", "valid_path", Permission::Write),
+    ];
+
+    for (user, file_path, permission) in tests {
+        let result = verify_permissions(user, file_path, permission);
+        match result {
+            Ok(()) => println!("Permission granted for {:?} on {:?} with {:?}", user, file_path, permission),
+            Err(e) => println!("Permission denied for {:?} on {:?} with {:?}: {}", user, file_path, permission, e),
+        }
+    }
 }
