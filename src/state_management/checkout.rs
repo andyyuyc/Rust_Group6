@@ -3,13 +3,15 @@ use crate::file_management::{hash::Hash, commit::{self, commit}};
 
 use crate::{interface::io::{get_serialized_object, get_object}, file_management::{commit::Commit, hash::DVCSHash, directory::Directory}};
 
-fn checkout(hash: Hash) -> io::Result<()> {
+pub fn checkout(hash: Hash) -> io::Result<()> {
     // Grab the hash of the branch from 
     let commit: Commit = get_serialized_object(hash.clone())?;
 
     // Move the head to the branch (set it to the hash)
 
+
     // Remove the files in the current directory
+
 
     // Get the directory to reconstruct from and then reconstruct the files
     let directory: Directory = get_serialized_object(commit.get_dir_hash())?;
@@ -20,7 +22,7 @@ fn checkout(hash: Hash) -> io::Result<()> {
 
             // Reconstruct the directory structure
             // Might throw an error if there is no parent
-            println!("Directory Path: {}", &dir_path.display());
+            // println!("Directory Path: {}", &dir_path.display());
             std::fs::create_dir_all(&dir_path.parent().unwrap())?;
                     
             // Recreate the file and copy the data to it
@@ -36,17 +38,13 @@ fn checkout(hash: Hash) -> io::Result<()> {
 
 #[test]
 fn checkout_test() {
-    use crate::interface::io::*;
-    use serde::{Serialize, Deserialize};
-    use std::io::Read;
-
     let mut changes = vec![];
     
-    changes.push(commit::Change::Add {path: "test/test.txt"});
-    changes.push(commit::Change::Add {path: "test/test2.txt"});
-    changes.push(commit::Change::Add {path: "test/idk/something.txt" });
+    changes.push(commit::Change::Add {path: "test/test.txt".to_owned()});
+    changes.push(commit::Change::Add {path: "test/test2.txt".to_owned()});
+    changes.push(commit::Change::Add {path: "test/idk/something.txt".to_owned()});
 
-    let commit = commit("Justin", None, &changes, "Initial commit").unwrap();
+    let commit = commit("Justin", None, &changes, "Added test2").unwrap();
 
     std::fs::remove_dir_all("test");
     checkout(commit.get_hash());

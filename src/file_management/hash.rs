@@ -13,6 +13,10 @@ impl Hash {
         Hash(digest(vec))
     }
 
+    pub fn from_hashed(hash: &str) -> Hash {
+        Hash(String::from(hash))
+    }
+
     pub fn as_string(&self) -> String {
         self.0.clone()
     }

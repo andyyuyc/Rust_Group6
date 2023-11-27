@@ -16,19 +16,20 @@ impl Directory {
         }
     }
 
+    pub fn contains_file_ref(&self, path: &PathBuf) -> bool {
+        self.files.contains_key(&path.to_string_lossy().into_owned())
+    }
+
     // Returns the hashed reference to a file given its parent path
     pub fn get_file_ref(&self, path: &PathBuf) -> Option<&BlobRef> {
         self.files.get(&path.to_string_lossy().into_owned())
     }
 
     // Inserts a hash reference to a file 
-    pub fn insert_file_ref(&mut self, path: &PathBuf, file_ref: BlobRef) -> Option<()> {
+    pub fn insert_file_ref(&mut self, path: &PathBuf, file_ref: BlobRef) {
         let path_as_str = path.to_string_lossy().into_owned();
-        if self.files.contains_key(&path_as_str) { 
-            None 
-        } else {
+        if !self.files.contains_key(&path_as_str) { 
             self.files.insert(path_as_str, file_ref);
-            Some(())
         }
     }
 
@@ -106,7 +107,7 @@ fn serialize_blob_test() {
 }
 
 #[test]
-fn test1() {
+fn directory_serialize_deserialize_test() {
     use sha256::digest;
 
     let mut directory = Directory::new();

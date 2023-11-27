@@ -33,7 +33,7 @@ pub fn get_serialized_object<T: DeserializeOwned>(hash: Hash) -> io::Result<T> {
 // no copying is performed
 pub fn add_object(hash: Hash, data: &[u8]) -> io::Result<()> {
     // Get file path
-    let path = get_path(hash);
+    let path = get_relative_path(hash);
 
     if !path.exists() {
         // Create directory for prefix if nonexistant
@@ -55,7 +55,7 @@ pub fn add_object(hash: Hash, data: &[u8]) -> io::Result<()> {
 // Retrieves the data stored in the object at the hashed path
 pub fn get_object(hash: Hash) -> io::Result<Vec<u8>> {
     // Get file path
-    let path = get_path(hash);
+    let path = get_relative_path(hash);
 
     // Read data from file into a vector
     let mut file = File::open(path)?;
@@ -65,12 +65,13 @@ pub fn get_object(hash: Hash) -> io::Result<Vec<u8>> {
     Ok(data)
 }
 
-// Gets the path associated with the hash
-pub fn get_path(hash: Hash) -> PathBuf {
+// Gets the relative path associated with the hash 
+pub fn get_relative_path(hash: Hash) -> PathBuf {
     let hash = hash.as_string();
     let prefix = &hash[0..2];
     let postfix = &hash[2..];
-    PathBuf::from("obj")
+    PathBuf::from("dvcs")
+        .join("obj")
         .join(prefix)
         .join(format!("{}.obj", postfix))
 }
@@ -95,7 +96,7 @@ fn test1() {
     let test_struct = TestStruct {data: String::from("hello")};
     add_serialized_object(&test_struct);
 
-    let path = get_path(test_struct.get_hash());
+    let path = get_relative_path(test_struct.get_hash());
     let mut file = File::open(path).unwrap();
     let mut s = String::new();
     file.read_to_string(&mut s);

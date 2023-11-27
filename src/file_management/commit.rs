@@ -1,17 +1,18 @@
-use std::{io::{self, Read}, path::PathBuf, fs::File};
+use std::{io::{self, Read}, path::{PathBuf, Path}, fs::{File, create_dir_all}, fmt::Display};
 
 use serde::{Serialize, Deserialize};
 use crate::{file_management::hash::Hash, interface::io::{get_serialized_object, add_serialized_object, add_object}};
 
 use super::{directory::{Directory, BlobRef}, hash::DVCSHash};
 
-pub enum Change<'a> {
-    Add { path: &'a str },
-    Remove { path: &'a str },
+
+pub enum Change {
+    Add { path: String },
+    Remove { path: String },
 }
 
 // Can possible use builder to build this?
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Commit {
     parent_hashes: Vec<Hash>,
     dir_hash: Hash,
@@ -45,7 +46,26 @@ impl DVCSHash for Commit {
     }
 }
 
-// What if there is no parent
+impl Display for Commit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f,
+
+        "Commit:
+hash: {}
+author: {}
+message: {}
+time: {}
+        
+        ", 
+            self.get_hash().as_string(), 
+            self.author, 
+            self.message, 
+            self.time_stamp
+        )
+    }
+}
+
+// 
 pub fn commit(
     author: &str,
     parent_hash: Option<Hash>, 
@@ -67,7 +87,7 @@ pub fn commit(
 
     // Get curr time
     let curr_time = chrono::Utc::now()
-        .format("%Y-%m-%d %H:%M:%S")
+        .format("%Y-%m-%d %H:%M:%S%.3f")
         .to_string();
 
     // Serialize the dir and store it with a hash
@@ -101,9 +121,7 @@ fn process_revisions(dir: Directory, changes: &Vec<Change>) -> io::Result<Direct
                     // Then create a ref to the blob and insert it in the directory
                     let hash = process_addition(path)?;
                     let blob_ref = BlobRef::new(path, hash);
-                    acc.insert_file_ref(&PathBuf::from(path), blob_ref)
-                        .ok_or(io::Error::new(io::ErrorKind::Other, "Failed to insert file ref"))?;
-                    println!("Added change {}", path);
+                    acc.insert_file_ref(&PathBuf::from(path), blob_ref);
                 },
                 // I guess remove would be used in case there is a move of a file?
                 Change::Remove { path } => {
@@ -117,7 +135,7 @@ fn process_revisions(dir: Directory, changes: &Vec<Change>) -> io::Result<Direct
         })
 }
 
-fn process_addition(path:&str) -> io::Result<Hash> {
+fn process_addition(path: &str) -> io::Result<Hash> {
     let add_path = PathBuf::from(path);
 
     // Open the added file and read the data to a vector
@@ -132,3 +150,12 @@ fn process_addition(path:&str) -> io::Result<Hash> {
     Ok(hash)
 }
 
+#[test]
+fn commit_test() {
+    let mut changes = vec![];
+    
+    changes.push(Change::Add {path: "test/test.txt".to_owned()});
+    changes.push(Change::Add {path: "test/idk/something.txt".to_owned()});
+
+    let commit = commit("Justin", None, &changes, "Initial commit").unwrap();
+}
