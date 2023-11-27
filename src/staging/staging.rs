@@ -8,16 +8,13 @@ pub fn stage_add(repository_path: &str, file_path: &str) -> io::Result<()> {
     let repo_path = Path::new(repository_path);
     validate_repository_path(&repo_path)?;
 
-    let file_path = repo_path.join(file_path);
-    if !file_path.exists() {
-        return Err(io::Error::new(io::ErrorKind::NotFound, "File does not exist"));
+    let file_to_copy = Path::new(file_path);
+    if !file_to_copy.exists() {
+        return Err(io::Error::new(io::ErrorKind::NotFound, "Source file does not exist"));
     }
 
-    let staging_path = repo_path.join(".staging");
-    fs::create_dir_all(&staging_path)?;
-
-    let destination = staging_path.join(file_path.file_name().unwrap());
-    fs::copy(file_path, destination)?;
+    let destination = repo_path.join(file_to_copy.file_name().unwrap());
+    fs::copy(file_to_copy, destination)?;
 
     Ok(())
 }
@@ -27,13 +24,12 @@ pub fn stage_remove(repository_path: &str, file_path: &str) -> io::Result<()> {
     let repo_path = Path::new(repository_path);
     validate_repository_path(&repo_path)?;
 
-    let staging_path = repo_path.join(".staging");
-    let file_to_remove = staging_path.join(Path::new(file_path).file_name().unwrap());
+    let file_to_remove = repo_path.join(Path::new(file_path).file_name().unwrap());
 
     if file_to_remove.exists() {
         fs::remove_file(file_to_remove)?;
     } else {
-        return Err(io::Error::new(io::ErrorKind::NotFound, "File not found in staging area"));
+        return Err(io::Error::new(io::ErrorKind::NotFound, "File not found in repository"));
     }
 
     Ok(())
