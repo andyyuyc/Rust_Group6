@@ -1,7 +1,6 @@
 use std::fs::{self, File};
-use std::io::{self, Write, Read};
+use std::io::{self, Write, Read, stdin, stdout};
 use std::path::Path;
-use std::env;
 use std::collections::HashSet;
 
 // Adds a file to the staging area
@@ -78,20 +77,28 @@ fn validate_repository_path(repo_path: &Path) -> io::Result<()> {
 }
 
 fn main() -> io::Result<()> {
-    let args: Vec<String> = env::args().collect();
+    let mut repository_path = String::new();
+    let mut command = String::new();
+    let mut file_path = String::new();
 
-    if args.len() < 4 {
-        eprintln!("Usage: {} <repository_path> <add/remove> <file_path>", args[0]);
-        return Err(io::Error::new(io::ErrorKind::InvalidInput, "Insufficient arguments"));
-    }
+    print!("Enter repository path: ");
+    stdout().flush()?; 
+    stdin().read_line(&mut repository_path)?;
+    repository_path = repository_path.trim().to_string();
 
-    let repository_path = &args[1];
-    let command = &args[2];
-    let file_path = &args[3];
+    print!("Enter command (add/remove): ");
+    stdout().flush()?;
+    stdin().read_line(&mut command)?;
+    command = command.trim().to_string();
+
+    print!("Enter file path: ");
+    stdout().flush()?; 
+    stdin().read_line(&mut file_path)?;
+    file_path = file_path.trim().to_string();
 
     match command.as_str() {
-        "add" => stage_add(repository_path, file_path)?,
-        "remove" => stage_remove(repository_path, file_path)?,
+        "add" => stage_add(&repository_path, &file_path)?,
+        "remove" => stage_remove(&repository_path, &file_path)?,
         _ => {
             eprintln!("Invalid command: {}", command);
             return Err(io::Error::new(io::ErrorKind::InvalidInput, "Invalid command"));
