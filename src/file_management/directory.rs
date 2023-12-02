@@ -67,7 +67,7 @@ impl DVCSHash for Directory {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, Eq, Hash)]
 pub struct BlobRef {
     name: String,
     content_hash: Hash                          // Hash of the blob it references
@@ -91,6 +91,12 @@ impl BlobRef {
 
     pub fn update_content_hash(&mut self, hash: Hash) {
         self.content_hash = hash
+    }
+}
+
+impl PartialEq for BlobRef {
+    fn eq(&self, other: &Self) -> bool {
+        self.content_hash == other.content_hash
     }
 }
 

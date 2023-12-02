@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use sha256::digest;
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, Hash, Eq, PartialEq)]
 pub struct Hash(String);
 
 impl Hash {

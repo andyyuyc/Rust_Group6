@@ -2,14 +2,14 @@
 
 use file_management::commit::Commit;
 
-use crate::{file_management::{commit::{Change, commit}, hash::DVCSHash}, state_management::checkout::checkout};
+use crate::{file_management::{commit::{Change, commit}, hash::DVCSHash}, state_management::checkout::checkout, interface::io::get_serialized_object};
 
 pub mod file_management;
 pub mod interface;
 pub mod state_management;
 
-fn main() {
-    
+fn main() -> std::io::Result<()> {
+
     let commit_1 = first_commit();
     println!("{commit_1}");
     println!("Added test/test.txt");
@@ -38,7 +38,8 @@ fn main() {
 
                     // Perform the checkout operation.
                     let _ = std::fs::remove_dir_all("test");
-                    let _ = checkout(Hash::from_hashed(commit_hash));
+                    let commit = get_serialized_object(Hash::from_hashed(commit_hash))?;
+                    let _ = checkout(commit);
                 } else {
                     println!("Invalid input format. Expected 'checkout <commit_hash>'.");
                 }

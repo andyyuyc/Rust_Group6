@@ -8,6 +8,7 @@ use super::{directory::{Directory, BlobRef}, hash::DVCSHash};
 pub enum Change {
     Add { path: String },
     Remove { path: String },
+    Modify { path: String }
 }
 
 // Can possible use builder to build this?
@@ -21,8 +22,24 @@ pub struct Commit {
 }
 
 impl Commit {
+    pub fn get_parent_hashes(&self) -> Vec<Hash> {
+        self.parent_hashes.clone()
+    }
+
     pub fn get_dir_hash(&self) -> Hash {
         self.dir_hash.clone()
+    }
+
+    pub fn get_author(&self) -> &str {
+        &self.author
+    }
+
+    pub fn get_message(&self) -> &str {
+        &self.message
+    }
+
+    pub fn get_time_stamp(&self) -> &str {
+        &self.time_stamp
     }
 }
 
@@ -48,14 +65,7 @@ impl DVCSHash for Commit {
 impl Display for Commit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f,
-
-        "Commit:
-hash: {}
-author: {}
-message: {}
-time: {}
-        
-        ", 
+            "Commit:\nhash: {}\nauthor: {}\nmessage: {}\ntime: {}", 
             self.get_hash().as_string(), 
             self.author, 
             self.message, 
@@ -64,7 +74,7 @@ time: {}
     }
 }
 
-// 
+// Creates a new commit
 pub fn commit(
     author: &str,
     parent_hash: Option<Hash>, 
@@ -115,7 +125,7 @@ fn process_revisions(dir: Directory, changes: &Vec<Change>) -> io::Result<Direct
     changes.iter()
         .try_fold(dir, |mut acc, change| {
             match change {
-                Change::Add { path } => {
+                Change::Add { path } | Change::Modify { path } => {
                     // Create the blob file and return its hash
                     // Then create a ref to the blob and insert it in the directory
                     let hash = process_addition(path)?;
@@ -154,7 +164,7 @@ fn commit_test() {
     let mut changes = vec![];
     
     changes.push(Change::Add {path: "test/test.txt".to_owned()});
-    changes.push(Change::Add {path: "test/idk/something.txt".to_owned()});
+    changes.push(Change::Add {path: "test/idk/test.txt".to_owned()});
 
     let commit = commit("Justin", None, &changes, "Initial commit").unwrap();
 }

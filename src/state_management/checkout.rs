@@ -3,10 +3,7 @@ use crate::file_management::{hash::Hash, commit::{self, commit}};
 
 use crate::{interface::io::{get_serialized_object, get_object}, file_management::{commit::Commit, hash::DVCSHash, directory::Directory}};
 
-pub fn checkout(hash: Hash) -> io::Result<()> {
-    // Grab the hash of the branch from 
-    let commit: Commit = get_serialized_object(hash.clone())?;
-
+pub fn checkout(commit: Commit) -> io::Result<()> {
     // Move the head to the branch (set it to the hash)
 
 
@@ -42,10 +39,10 @@ fn checkout_test() {
     
     changes.push(commit::Change::Add {path: "test/test.txt".to_owned()});
     changes.push(commit::Change::Add {path: "test/test2.txt".to_owned()});
-    changes.push(commit::Change::Add {path: "test/idk/something.txt".to_owned()});
+    changes.push(commit::Change::Add {path: "test/idk/test.txt".to_owned()});
 
     let commit = commit("Justin", None, &changes, "Added test2").unwrap();
 
     std::fs::remove_dir_all("test");
-    checkout(commit.get_hash());
+    checkout(commit);
 }
