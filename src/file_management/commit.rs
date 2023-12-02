@@ -5,7 +5,6 @@ use crate::{file_management::hash::Hash, interface::io::{get_serialized_object, 
 
 use super::{directory::{Directory, BlobRef}, hash::DVCSHash};
 
-
 pub enum Change {
     Add { path: String },
     Remove { path: String },

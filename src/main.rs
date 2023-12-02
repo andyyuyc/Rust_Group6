@@ -9,7 +9,7 @@ pub mod interface;
 pub mod state_management;
 
 fn main() {
-
+    
     let commit_1 = first_commit();
     println!("{commit_1}");
     println!("Added test/test.txt");
@@ -28,16 +28,19 @@ fn main() {
                 // Trim the input to remove any trailing newline characters
                 let input = input.trim();
 
-                match input {
-                    "checkout 1" => {
-                        let _ = std::fs::remove_dir_all("test");
-                        let _ = checkout(commit_1.get_hash());
-                    },
-                    "checkout 2" => {
-                        let _ = std::fs::remove_dir_all("test");
-                        let _ = checkout(commit_2.get_hash());
-                    },
-                    _ => {}
+                // Split the input string and collect the parts into a vector.
+                let parts: Vec<&str> = input.split_whitespace().collect();
+
+                // Check if the input format is correct.
+                if parts.len() == 2 && parts[0] == "checkout" {
+                    // Extract the commit hash.
+                    let commit_hash = parts[1];
+
+                    // Perform the checkout operation.
+                    let _ = std::fs::remove_dir_all("test");
+                    let _ = checkout(Hash::from_hashed(commit_hash));
+                } else {
+                    println!("Invalid input format. Expected 'checkout <commit_hash>'.");
                 }
             },
             Err(error) => println!("Error reading input: {}", error),

@@ -57,7 +57,6 @@ impl Directory {
 }
 
 impl DVCSHash for Directory {
-    // What if the content of the directories are the same?
     fn get_hash(&self) -> Hash {
         let mut hash = String::new();
         for (path, blobref) in self.get_key_value_pairs() {
