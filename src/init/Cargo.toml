@@ -1,0 +1,17 @@
+[package]
+name = "Final"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+git2 = "0.18.1"
+tempfile = "3.2.0"
+structopt = "0.3.26"
+tempdir = "0.3.7"
+
+
+[[bin]]
+name = "Final_init"
+path = "src/lib.rs"

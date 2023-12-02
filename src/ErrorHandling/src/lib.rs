@@ -29,7 +29,7 @@ fn get_input(prompt: &str) -> String {
     input.trim().to_owned()
 }
 
-fn ErrorHandling() {
+fn main() {
     let max_attempts = 3;
 
     // 尝试读取文件
