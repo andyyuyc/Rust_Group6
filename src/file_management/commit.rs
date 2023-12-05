@@ -1,17 +1,10 @@
 use std::{io::{self, Read}, path::{PathBuf, Path}, fs::{File, create_dir_all}, fmt::Display};
 
 use serde::{Serialize, Deserialize};
-use crate::{file_management::hash::Hash, interface::io::{get_serialized_object, add_serialized_object, add_object}};
+use crate::{file_management::{hash::Hash, directory}, interface::io::RepositoryInterface};
 
 use super::{directory::{Directory, BlobRef}, hash::DVCSHash};
 
-pub enum Change {
-    Add { path: String },
-    Remove { path: String },
-    Modify { path: String }
-}
-
-// Can possible use builder to build this?
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Commit {
     parent_hashes: Vec<Hash>,
@@ -77,94 +70,49 @@ impl Display for Commit {
 // Creates a new commit
 pub fn commit(
     author: &str,
-    parent_hash: Option<Hash>, 
-    changes: &Vec<Change>,
-    message: &str
+    parent_hashes: &Vec<Hash>, 
+    new_dir: Directory,
+    message: &str,
+    file_system: &RepositoryInterface
 ) -> io::Result<Commit> {
-    // Get parent directory content and process revisions to get 
-    // a new directory object
-    let dir = match &parent_hash {
-        Some(hash) => {
-            let parent_commit: Commit = get_serialized_object(hash.clone())?;
-            let parent_dir: Directory = get_serialized_object(parent_commit.dir_hash)?;
-            process_revisions(parent_dir, changes)
-        },
-        None => {
-            process_revisions(Directory::new(), changes)
-        }
-    }?;
-
     // Get curr time
     let curr_time = chrono::Utc::now()
         .format("%Y-%m-%d %H:%M:%S%.3f")
         .to_string();
 
-    // Serialize the dir and store it with a hash
-    add_serialized_object(&dir)?;
-
-    let mut parent_hashes = Vec::new();
-    if parent_hash.is_some() {parent_hashes.push(parent_hash.unwrap());}
-
     // Create the commit
     let commit = Commit {
-        parent_hashes,
-        dir_hash: dir.get_hash(),
+        parent_hashes: parent_hashes.clone(),
+        dir_hash: new_dir.get_hash(),
         author: String::from(author),
         message: String::from(message),
         time_stamp: curr_time
     };
 
-    // Serialize the commit
-    add_serialized_object(&commit)?;
+    // Serialize the commit and directory
+    file_system.add_serialized_object(&new_dir)?;
+    file_system.add_serialized_object(&commit)?;
 
     Ok(commit)
 }
 
-// We cant forget the process of actually hashing the content and adding and removing the files
-fn process_revisions(dir: Directory, changes: &Vec<Change>) -> io::Result<Directory> {
-    changes.iter()
-        .try_fold(dir, |mut acc, change| {
-            match change {
-                Change::Add { path } | Change::Modify { path } => {
-                    // Create the blob file and return its hash
-                    // Then create a ref to the blob and insert it in the directory
-                    let hash = process_addition(path)?;
-                    let blob_ref = BlobRef::new(path, hash);
-                    acc.insert_file_ref(&PathBuf::from(path), blob_ref);
-                },
-                // I guess remove would be used in case there is a move of a file?
-                Change::Remove { path } => {
-                    // We technically shouldn't remove the actual blob file since blobs are hashed
-                    // by content and multiple blobrefs can reference the same blob
-                    let remove_path = PathBuf::from(path);
-                    acc.remove_file_ref(&remove_path);
-                },
-            }
-            Ok(acc)
-        })
-}
-
-fn process_addition(path: &str) -> io::Result<Hash> {
-    let add_path = PathBuf::from(path);
-
-    // Open the added file and read the data to a vector
-    let mut file = File::open(&add_path)?;
-    let mut data = Vec::new();
-    file.read_to_end(&mut data)?;
-
-    // Hash the data and add it as a blob
-    let hash = Hash::from(&data);
-    add_object(hash.clone(), &data)?;
-
-    Ok(hash)
-}
-
 #[test]
-fn commit_test() {
-    let mut changes = vec![];
-    
-    changes.push(Change::Add {path: "test/test.txt".to_owned()});
-    changes.push(Change::Add {path: "test/idk/test.txt".to_owned()});
+fn commit_test() -> std::io::Result<()> {
+    use crate::interface::io::RepositoryInterface;
 
-    let commit = commit("Justin", None, &changes, "Initial commit").unwrap();
+    let repo = RepositoryInterface::new(&PathBuf::from(".")).unwrap();
+
+    let path1 = PathBuf::from("test/test.txt");
+    let path2 = PathBuf::from("test/idk/test.txt");
+
+    let mut file_paths = vec![
+        &path1,
+        &path2
+    ];
+
+    let dir = repo.create_dir_from_files(&file_paths)?;
+    let commit = commit("Justin", &vec![], dir, "Initial commit", &repo).unwrap();
+    
+    Ok(())
 }
+

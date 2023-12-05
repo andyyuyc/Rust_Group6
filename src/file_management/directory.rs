@@ -1,6 +1,8 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf, fs::File, io::Read};
 
 use serde::{Serialize, Deserialize};
+
+// use crate::interface::io::add_object;
 
 use super::hash::{Hash, DVCSHash};
 
@@ -16,16 +18,17 @@ impl Directory {
         }
     }
 
+    /// Checks if the directory contains the specified path
     pub fn contains_file_ref(&self, path: &PathBuf) -> bool {
         self.files.contains_key(&path.to_string_lossy().into_owned())
     }
 
-    // Returns the hashed reference to a file given its parent path
+    /// Returns the hashed reference to a file given its parent path
     pub fn get_file_ref(&self, path: &PathBuf) -> Option<&BlobRef> {
         self.files.get(&path.to_string_lossy().into_owned())
     }
 
-    // Inserts a hash reference to a file 
+    /// Inserts a hash reference to a file
     pub fn insert_file_ref(&mut self, path: &PathBuf, file_ref: BlobRef) {
         let path_as_str = path.to_string_lossy().into_owned();
         if !self.files.contains_key(&path_as_str) { 
@@ -33,10 +36,12 @@ impl Directory {
         }
     }
 
+    /// Removes a hash reference to a file
     pub fn remove_file_ref(&mut self, path: &PathBuf) -> Option<(String, BlobRef)> {
         self.files.remove_entry(&path.to_string_lossy().into_owned())
     }
 
+    /// Update a hash reference for a path
     pub fn modify_file_ref(&mut self, path: &PathBuf, hash: Hash) -> Option<()> {
         let path_as_str = path.to_string_lossy().into_owned();
         match self.files.get_mut(&path_as_str) {
@@ -48,6 +53,7 @@ impl Directory {
         }
     }
 
+    /// Returns directory path and blobref pairs
     pub fn get_key_value_pairs(&self) -> impl Iterator<Item = (PathBuf, BlobRef)> + '_ {
         self.files.iter()
             .map(|(path, blobref)| 
@@ -69,20 +75,14 @@ impl DVCSHash for Directory {
 
 #[derive(Clone, Serialize, Deserialize, Debug, Eq, Hash)]
 pub struct BlobRef {
-    name: String,
     content_hash: Hash                          // Hash of the blob it references
 }
 
 impl BlobRef {
-    pub fn new(name: &str, content_hash: Hash) -> BlobRef {
+    pub fn new(content_hash: Hash) -> BlobRef {
         BlobRef { 
-            name: String::from(name), 
             content_hash
         }
-    }
-
-    pub fn get_name(&self) -> &str {
-        self.name.as_str()
     }
 
     pub fn get_content_hash(&self) -> &Hash {
@@ -102,7 +102,7 @@ impl PartialEq for BlobRef {
 
 #[test]
 fn serialize_blob_test() {
-    let blob = BlobRef::new("test-blob", Hash::new("test-hash"));
+    let blob = BlobRef::new(Hash::new("test-hash"));
 
     let serialized_blob = serde_json::to_string(&blob).unwrap();
     println!("Serialized: {}", serde_json::to_string(&blob).unwrap());
@@ -118,11 +118,11 @@ fn directory_serialize_deserialize_test() {
     let mut directory = Directory::new();
 
     let path1 = PathBuf::from("file1");
-    let file_ref1 = BlobRef::new("file1", Hash::new("od-file1-hash"));
+    let file_ref1 = BlobRef::new(Hash::new("od-file1-hash"));
     directory.insert_file_ref(&path1, file_ref1);
 
     let path2 = PathBuf::from("something/file2");
-    let file_ref2 = BlobRef::new("inner-file1", Hash::new("od-filein-hash"));
+    let file_ref2 = BlobRef::new(Hash::new("od-filein-hash"));
     directory.insert_file_ref(&path2, file_ref2);
     
     let serialized_dir = serde_json::to_string(&directory).unwrap();
