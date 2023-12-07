@@ -1,92 +1,28 @@
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader, Write, stdin, stdout};
 use std::path::Path;
-use std::collections::HashMap;
-
 
 fn main() {
-    let mut branches = HashMap::new();
-    branches.insert("main".to_string(), "path/to/main/branch".to_string());
-
-    println!("Available branches: {:?}", branches.keys());
-    println!("enter/create/delete branch");
-    print!("Command: ");
-    io::stdout().flush().unwrap();
-
-    let mut input = String::new();
-    stdin().read_line(&mut input).expect("Failed to read input");
-    let args: Vec<&str> = input.trim().split_whitespace().collect();
-
-    match args.as_slice() {
-        ["create", new_branch] => {
-            if branches.contains_key(*new_branch) {
-                println!("Branch '{}' already exists.", new_branch);
-            } else {
-                let new_path = format!("path/to/{}/branch", new_branch);
-                branches.insert((*new_branch).to_string(), new_path);
-                println!("Branch '{}' created.", new_branch);
-            }
-        },
-        ["delete", branch_to_delete] => {
-            if branches.remove(*branch_to_delete).is_some() {
-                println!("Branch '{}' deleted.", branch_to_delete);
-            } else {
-                println!("Branch '{}' not found.", branch_to_delete);
-            }
-        },
-        [branch_name] => {
-            if let Some(branch_path) = branches.get(*branch_name) {
-                execute_branch_action(branch_path);
-            } else {
-                println!("Branch '{}' not found.", branch_name);
-            }
-        },
-        _ => {
-            println!("Invalid command.");
-            return;
-        },
-    }
-}
-
-
-fn execute_branch_action(branch_path: &str) {
     println!("pull/push");
     let mut action = String::new();
-    stdin().read_line(&mut action).expect("Failed to read action");
+    stdin().read_line(&mut action).expect("Failed to read line");
 
     match action.trim() {
         "pull" => {
-            let (remote_path, _) = get_paths();
-            if let Err(e) = pull(&remote_path, branch_path) {
+            let (remote_path, local_path) = get_paths();
+            if let Err(e) = pull(&remote_path, &local_path) {
                 println!("Error during pull: {}", e);
             }
         },
         "push" => {
-            let (_, remote_path) = get_paths();
-            if let Err(e) = push(branch_path, &remote_path) {
+            let (local_path, remote_path) = get_paths();
+            if let Err(e) = push(&local_path, &remote_path) {
                 println!("Error during push: {}", e);
             }
         },
-        _ => println!("Invalid action"),
+        _ => println!("Invalid action. Please enter 'pull' or 'push'."),
     }
 }
-
-
-fn get_branch_name(branches: &HashMap<String, String>) -> String {
-    println!("Enter the branch name:");
-    let mut branch_name = String::new();
-    stdin().read_line(&mut branch_name).expect("Failed to read branch name");
-    let branch_name = branch_name.trim();
-
-    branches.get(branch_name).map_or_else(
-        || {
-            println!("Branch not found.");
-            "main".to_string()
-        },
-        |_| branch_name.to_string(),
-    )
-}
-
 
 fn get_paths() -> (String, String) {
     println!("Enter the source path:");
@@ -100,8 +36,7 @@ fn get_paths() -> (String, String) {
     (source_path.trim().to_string(), destination_path.trim().to_string())
 }
 
-
-fn detect_changes(file1: &str, file2: &str) -> io::Result<bool> {
+fn compare_files(file1: &str, file2: &str) -> io::Result<bool> {
     let f1 = File::open(file1)?;
     let f2 = File::open(file2)?;
 
@@ -124,19 +59,18 @@ fn detect_changes(file1: &str, file2: &str) -> io::Result<bool> {
     Ok(conflict)
 }
 
-
-fn synchronize_changes(source: &str, destination: &str) -> io::Result<()> {
-    let conflict = detect_changes(source, destination)?;
+fn merge_files(source: &str, destination: &str) -> io::Result<()> {
+    let conflict = compare_files(source, destination)?;
 
     if conflict {
         println!("Merge conflict detected. Manual resolution required.");
     } else {
         fs::copy(source, destination)?;
+        println!("Files merged successfully.");
     }
 
     Ok(())
 }
-
 
 fn pull(remote_path: &str, local_path: &str) -> io::Result<()> {
     let remote_files = fs::read_dir(remote_path)?;
@@ -147,7 +81,7 @@ fn pull(remote_path: &str, local_path: &str) -> io::Result<()> {
         let dest_file = Path::new(local_path).join(&file_name);
 
         if Path::exists(&dest_file) {
-            synchronize_changes(source_file.to_str().unwrap(), dest_file.to_str().unwrap())?;
+            merge_files(source_file.to_str().unwrap(), dest_file.to_str().unwrap())?;
         } else {
             fs::copy(source_file, dest_file)?;
         }
@@ -156,7 +90,6 @@ fn pull(remote_path: &str, local_path: &str) -> io::Result<()> {
     println!("Pull completed.");
     Ok(())
 }
-
 
 fn push(local_path: &str, remote_path: &str) -> io::Result<()> {
     let local_files = fs::read_dir(local_path)?;
@@ -172,4 +105,3 @@ fn push(local_path: &str, remote_path: &str) -> io::Result<()> {
     println!("Push completed.");
     Ok(())
 }
-
