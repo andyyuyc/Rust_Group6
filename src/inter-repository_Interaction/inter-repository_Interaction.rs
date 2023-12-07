@@ -1,28 +1,90 @@
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader, Write, stdin, stdout};
 use std::path::Path;
+use std::collections::HashMap;
 
 
 fn main() {
+    let mut branches = HashMap::new();
+    branches.insert("main".to_string(), "path/to/main/branch".to_string());
+
+    println!("Available branches: {:?}", branches.keys());
+    println!("enter/create/delete branch");
+    print!("Command: ");
+    io::stdout().flush().unwrap();
+
+    let mut input = String::new();
+    stdin().read_line(&mut input).expect("Failed to read input");
+    let args: Vec<&str> = input.trim().split_whitespace().collect();
+
+    match args.as_slice() {
+        ["create", new_branch] => {
+            if branches.contains_key(*new_branch) {
+                println!("Branch '{}' already exists.", new_branch);
+            } else {
+                let new_path = format!("path/to/{}/branch", new_branch);
+                branches.insert((*new_branch).to_string(), new_path);
+                println!("Branch '{}' created.", new_branch);
+            }
+        },
+        ["delete", branch_to_delete] => {
+            if branches.remove(*branch_to_delete).is_some() {
+                println!("Branch '{}' deleted.", branch_to_delete);
+            } else {
+                println!("Branch '{}' not found.", branch_to_delete);
+            }
+        },
+        [branch_name] => {
+            if let Some(branch_path) = branches.get(*branch_name) {
+                execute_branch_action(branch_path);
+            } else {
+                println!("Branch '{}' not found.", branch_name);
+            }
+        },
+        _ => {
+            println!("Invalid command.");
+            return;
+        },
+    }
+}
+
+
+fn execute_branch_action(branch_path: &str) {
     println!("pull/push");
     let mut action = String::new();
-    stdin().read_line(&mut action).expect("Failed to read line");
+    stdin().read_line(&mut action).expect("Failed to read action");
 
     match action.trim() {
         "pull" => {
-            let (remote_path, local_path) = get_paths();
-            if let Err(e) = pull(&remote_path, &local_path) {
+            let (remote_path, _) = get_paths();
+            if let Err(e) = pull(&remote_path, branch_path) {
                 println!("Error during pull: {}", e);
             }
         },
         "push" => {
-            let (local_path, remote_path) = get_paths();
-            if let Err(e) = push(&local_path, &remote_path) {
+            let (_, remote_path) = get_paths();
+            if let Err(e) = push(branch_path, &remote_path) {
                 println!("Error during push: {}", e);
             }
         },
-        _ => println!("Invalid action. Please enter 'pull' or 'push'."),
+        _ => println!("Invalid action"),
     }
+}
+
+
+fn get_branch_name(branches: &HashMap<String, String>) -> String {
+    println!("Enter the branch name:");
+    let mut branch_name = String::new();
+    stdin().read_line(&mut branch_name).expect("Failed to read branch name");
+    let branch_name = branch_name.trim();
+
+    branches.get(branch_name).map_or_else(
+        || {
+            println!("Branch not found.");
+            "main".to_string()
+        },
+        |_| branch_name.to_string(),
+    )
 }
 
 
@@ -110,3 +172,4 @@ fn push(local_path: &str, remote_path: &str) -> io::Result<()> {
     println!("Push completed.");
     Ok(())
 }
+
