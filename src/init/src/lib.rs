@@ -2,11 +2,32 @@ use git2::{Repository, Error};
 use std::io::{self, Write};
 use std::fs::{self, DirEntry};
 use std::path::Path;
+use std::io::Result as IoResult;
+use std::process::Command;
+use std::fs::DirBuilder;
 
+/// 使用命令行工具初始化位于指定路径的新 Git 仓库
+fn init_repo(path: &str) -> IoResult<()> {
+    let status = Command::new("git")
+        .arg("init")
+        .arg(path)
+        .status()?;
 
-/// 初始化位于指定路径的新 Git 仓库
-fn init_repo(path: &str) -> Result<Repository, Error> {
-    Repository::init(path)
+    let repo_path = Path::new(path);
+
+    // 创建主目录 .my-dvcs
+    let dvcs_path = repo_path.join(".my-dvcs");
+    DirBuilder::new().recursive(true).create(&dvcs_path)?;
+
+    // 创建 obj, branches 和 heads 子目录
+    for subdir in ["obj", "branches", "heads"].iter() {
+        DirBuilder::new().recursive(true).create(dvcs_path.join(subdir))?;
+    }
+    if status.success() {
+        Ok(())
+    } else {
+        Err(io::Error::new(io::ErrorKind::Other, "Failed to initialize git repository"))
+    }
 }
 
 
