@@ -49,7 +49,6 @@ fn checkout_test() -> std::io::Result<()> {
     let dir = repo.create_dir_from_files(&file_paths)?;
     let commit = commit("Justin", &vec![], dir, "Initial commit", &repo).unwrap();
 
-    std::fs::remove_dir_all("test");
     checkout(repo, commit);
 
     Ok(())

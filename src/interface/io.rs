@@ -197,7 +197,7 @@ impl RepositoryInterface {
             .join(".my-dvcs")
             .join("head");
     
-        let mut file = File::open(head_path).ok()?;
+        let mut file = File::create(head_path).ok()?;
         file.write_all(new_hash.as_string().as_bytes()).ok()?;
 
         Some(())
