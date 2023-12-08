@@ -1,6 +1,8 @@
 use std::fs::{self, File};
-use std::io::{self, BufRead, BufReader, Write, stdin, stdout};
+use std::io::{self, Write, stdin, Read, BufReader};
 use std::path::Path;
+use std::collections::HashSet;
+
 
 fn main() {
     println!("pull/push");
@@ -24,6 +26,7 @@ fn main() {
     }
 }
 
+
 fn get_paths() -> (String, String) {
     println!("Enter the source path:");
     let mut source_path = String::new();
@@ -36,44 +39,45 @@ fn get_paths() -> (String, String) {
     (source_path.trim().to_string(), destination_path.trim().to_string())
 }
 
-fn compare_files(file1: &str, file2: &str) -> io::Result<bool> {
-    let f1 = File::open(file1)?;
-    let f2 = File::open(file2)?;
 
-    let file1_lines = BufReader::new(f1).lines();
-    let file2_lines = BufReader::new(f2).lines();
-
-    let mut conflict = false;
-    for (line1, line2) in file1_lines.zip(file2_lines) {
-        match (line1, line2) {
-            (Ok(l1), Ok(l2)) => {
-                if l1 != l2 {
-                    println!("Conflict found:\nFile1: {}\nFile2: {}", l1, l2);
-                    conflict = true;
-                }
-            },
-            _ => break,
-        }
+fn detect_conflict(source_lines: &[Vec<u8>], dest_lines: &[Vec<u8>], is_pull_operation: bool) -> bool {
+    if is_pull_operation {
+        !dest_lines.iter().all(|line| source_lines.contains(line))
+    } else {
+        !source_lines.iter().all(|line| dest_lines.contains(line))
     }
-
-    Ok(conflict)
 }
 
-fn merge_files(source: &str, destination: &str) -> io::Result<()> {
-    let conflict = compare_files(source, destination)?;
+
+fn merge_files(source_path: &str, dest_path: &str, is_pull_operation: bool) -> io::Result<bool> {
+    let mut source_file = File::open(source_path)?;
+    let mut dest_file = File::open(dest_path)?;
+
+    let mut source_contents = Vec::new();
+    let mut dest_contents = Vec::new();
+    source_file.read_to_end(&mut source_contents)?;
+    dest_file.read_to_end(&mut dest_contents)?;
+
+    let source_lines: Vec<Vec<u8>> = source_contents.split(|&b| b == b'\n').map(Vec::from).collect();
+    let dest_lines: Vec<Vec<u8>> = dest_contents.split(|&b| b == b'\n').map(Vec::from).collect();
+
+    let conflict = detect_conflict(&source_lines, &dest_lines, is_pull_operation);
 
     if conflict {
         println!("Merge conflict detected. Manual resolution required.");
+        Ok(true)
     } else {
-        fs::copy(source, destination)?;
-        println!("Files merged successfully.");
+        let data_to_write = if is_pull_operation { &source_contents } else { &dest_contents };
+        File::create(dest_path)?.write_all(data_to_write)?;
+        Ok(false)
     }
-
-    Ok(())
 }
+
 
 fn pull(remote_path: &str, local_path: &str) -> io::Result<()> {
     let remote_files = fs::read_dir(remote_path)?;
+    let mut conflict_occurred = false;
+
     for entry in remote_files {
         let entry = entry?;
         let file_name = entry.file_name();
@@ -81,27 +85,42 @@ fn pull(remote_path: &str, local_path: &str) -> io::Result<()> {
         let dest_file = Path::new(local_path).join(&file_name);
 
         if Path::exists(&dest_file) {
-            merge_files(source_file.to_str().unwrap(), dest_file.to_str().unwrap())?;
+            if merge_files(source_file.to_str().unwrap(), dest_file.to_str().unwrap(), true)? {
+                conflict_occurred = true;
+                break;
+            }
         } else {
             fs::copy(source_file, dest_file)?;
         }
     }
 
-    println!("Pull completed.");
+    if !conflict_occurred {
+        println!("Pull completed.");
+    }
+
     Ok(())
 }
 
+
 fn push(local_path: &str, remote_path: &str) -> io::Result<()> {
     let local_files = fs::read_dir(local_path)?;
+    let mut conflict_occurred = false;
+
     for entry in local_files {
         let entry = entry?;
         let file_name = entry.file_name();
         let source_file = Path::new(local_path).join(&file_name);
         let dest_file = Path::new(remote_path).join(&file_name);
 
-        fs::copy(source_file, dest_file)?;
+        if merge_files(source_file.to_str().unwrap(), dest_file.to_str().unwrap(), false)? {
+            conflict_occurred = true;
+            break;
+        }
     }
 
-    println!("Push completed.");
+    if !conflict_occurred {
+        println!("Push completed.");
+    }
+
     Ok(())
 }
