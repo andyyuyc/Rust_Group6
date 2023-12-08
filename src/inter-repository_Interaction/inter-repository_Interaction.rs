@@ -40,7 +40,7 @@ fn get_paths() -> (String, String) {
 }
 
 
-fn detect_conflict(source_lines: &[Vec<u8>], dest_lines: &[Vec<u8>], is_pull_operation: bool) -> bool {
+fn detect_changes(source_lines: &[Vec<u8>], dest_lines: &[Vec<u8>], is_pull_operation: bool) -> bool {
     if is_pull_operation {
         !dest_lines.iter().all(|line| source_lines.contains(line))
     } else {
@@ -49,7 +49,7 @@ fn detect_conflict(source_lines: &[Vec<u8>], dest_lines: &[Vec<u8>], is_pull_ope
 }
 
 
-fn merge_files(source_path: &str, dest_path: &str, is_pull_operation: bool) -> io::Result<bool> {
+fn synchronize_changes(source_path: &str, dest_path: &str, is_pull_operation: bool) -> io::Result<bool> {
     let mut source_file = File::open(source_path)?;
     let mut dest_file = File::open(dest_path)?;
 
@@ -61,7 +61,7 @@ fn merge_files(source_path: &str, dest_path: &str, is_pull_operation: bool) -> i
     let source_lines: Vec<Vec<u8>> = source_contents.split(|&b| b == b'\n').map(Vec::from).collect();
     let dest_lines: Vec<Vec<u8>> = dest_contents.split(|&b| b == b'\n').map(Vec::from).collect();
 
-    let conflict = detect_conflict(&source_lines, &dest_lines, is_pull_operation);
+    let conflict = detect_changes(&source_lines, &dest_lines, is_pull_operation);
 
     if conflict {
         println!("Merge conflict detected. Manual resolution required.");
@@ -85,7 +85,7 @@ fn pull(remote_path: &str, local_path: &str) -> io::Result<()> {
         let dest_file = Path::new(local_path).join(&file_name);
 
         if Path::exists(&dest_file) {
-            if merge_files(source_file.to_str().unwrap(), dest_file.to_str().unwrap(), true)? {
+            if synchronize_changes(source_file.to_str().unwrap(), dest_file.to_str().unwrap(), true)? {
                 conflict_occurred = true;
                 break;
             }
@@ -112,9 +112,13 @@ fn push(local_path: &str, remote_path: &str) -> io::Result<()> {
         let source_file = Path::new(local_path).join(&file_name);
         let dest_file = Path::new(remote_path).join(&file_name);
 
-        if merge_files(source_file.to_str().unwrap(), dest_file.to_str().unwrap(), false)? {
-            conflict_occurred = true;
-            break;
+        if Path::exists(&dest_file) {
+            if synchronize_changes(source_file.to_str().unwrap(), dest_file.to_str().unwrap(), true)? {
+                conflict_occurred = true;
+                break;
+            }
+        } else {
+            fs::copy(source_file, dest_file)?;
         }
     }
 
