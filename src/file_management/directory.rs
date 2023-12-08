@@ -2,8 +2,6 @@ use std::{collections::HashMap, path::PathBuf, fs::File, io::Read};
 
 use serde::{Serialize, Deserialize};
 
-// use crate::interface::io::add_object;
-
 use super::hash::{Hash, DVCSHash};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

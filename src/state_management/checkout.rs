@@ -4,9 +4,11 @@ use crate::file_management::{hash::Hash, commit::{self, commit}};
 use crate::{interface::io::RepositoryInterface, file_management::{commit::Commit, hash::DVCSHash, directory::Directory}};
 
 pub fn checkout(file_system: RepositoryInterface, commit: Commit) -> io::Result<()> {
-    // Move the head to the branch (set it to the hash)
+    // Move the head to the commit (set it to the hash)
+    file_system.update_current_head(commit.get_hash());
 
     // Remove the files in the current directory
+    // file_system.clear_directory();
 
     // Get the directory to reconstruct from and then reconstruct the files
     let directory: Directory = file_system.get_serialized_object(commit.get_dir_hash())?;
@@ -31,12 +33,13 @@ pub fn checkout(file_system: RepositoryInterface, commit: Commit) -> io::Result<
     Ok(())
 }
 
+
 #[test]
 fn checkout_test() -> std::io::Result<()> {
-    let repo = RepositoryInterface::new(&PathBuf::from(".")).unwrap();
+    let repo = RepositoryInterface::new(&PathBuf::from("test")).unwrap();
 
-    let path1 = PathBuf::from("test/test.txt");
-    let path2 = PathBuf::from("test/idk/test.txt");
+    let path1 = PathBuf::from("test.txt");
+    let path2 = PathBuf::from("idk/test.txt");
 
     let mut file_paths = vec![
         &path1,

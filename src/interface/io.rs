@@ -1,4 +1,4 @@
-use std::{io::{self, Write, Read}, fs::File, path::PathBuf};
+use std::{io::{self, Write, Read}, fs::{File, OpenOptions}, path::PathBuf};
 use serde::{Serialize, de::DeserializeOwned, Deserialize};
 use crate::file_management::{hash::Hash, directory::{Directory, BlobRef}};
 use crate::file_management::hash::DVCSHash;
@@ -20,7 +20,7 @@ impl RepositoryInterface {
         None
     }
 
-    /// Returns true if the specified dir contains a repo
+    /// Returns true if the specified directory contains a repo
     pub fn is_repo(dir_path: &PathBuf) -> bool {
         if dir_path.is_dir() {
             if let Ok(entries) = std::fs::read_dir(dir_path) {
@@ -139,6 +139,84 @@ impl RepositoryInterface {
 
                 Ok(acc)
         })
+    }
+
+    /// Returns the path for a branch in the repo
+    pub fn get_branch_path(&self, branch_name: &str) -> PathBuf {
+        self.get_repo_path()
+            .join(".my-dvcs")
+            .join("branches")
+            .join(branch_name)
+    }
+
+    /// Creates a branch
+    pub fn create_branch(&self, branch_name: &str, current_hash: Hash) -> std::io::Result<()> {
+        let branch_path = self.get_branch_path(branch_name);
+
+        if !branch_path.exists() {
+            // Create the file and put the hash inside 
+            let mut file = File::create(branch_path)?;
+            file.write_all(current_hash.as_string().as_bytes())?;
+        } 
+
+        Err(io::Error::new(io::ErrorKind::AlreadyExists, "Branch already exists"))
+    }
+
+    /// Updates the hash for the specified branch
+    pub fn update_branch_head(&self, branch_name: &str, new_hash: Hash) -> std::io::Result<()> {
+        let branch_path = self.get_branch_path(branch_name);
+
+        if branch_path.exists() {
+            let mut file = OpenOptions::new()
+                .write(true)
+                .open(branch_path)?;
+
+            file.write_all(new_hash.as_string().as_bytes());
+        }
+
+        Err(io::Error::new(io::ErrorKind::NotFound, "Branch does not exist"))
+    }
+
+    /// Returns the current overall head (not the branch head)
+    pub fn get_current_head(&self) -> Option<Hash> {
+        let head_path = self.get_repo_path()
+            .join(".my-dvcs")
+            .join("head");
+
+        let mut file = File::open(head_path).ok()?;
+        let mut head = String::new();
+
+        // Copy the hash from the head file  and convert it to a hash
+        file.read_to_string(&mut head).ok()?;
+        Some(Hash::from_hashed(&head))
+    } 
+
+    /// Updates the hash for the specified branch
+    pub fn update_current_head(&self, new_hash: Hash) -> Option<()> {
+        let head_path = self.get_repo_path()
+            .join(".my-dvcs")
+            .join("head");
+    
+        let mut file = File::open(head_path).ok()?;
+        file.write_all(new_hash.as_string().as_bytes()).ok()?;
+
+        Some(())
+    }
+
+    /// Clears the directory
+    pub fn clear_directory(&self) -> io::Result<()> {
+        let entries = std::fs::read_dir(&self.dir_path)?;
+
+        for entry in entries {
+            let entry = entry?;
+            let path = entry.path();
+    
+            if path.is_file() {
+                std::fs::remove_file(path)?;
+            }
+        }
+    
+        Ok(())
     }
 }
 
