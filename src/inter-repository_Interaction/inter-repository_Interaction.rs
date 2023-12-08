@@ -11,13 +11,13 @@ fn main() {
 
     match action.trim() {
         "pull" => {
-            let (remote_path, local_path) = get_paths();
+            let (remote_path, local_path) = get_paths("pull");
             if let Err(e) = pull(&remote_path, &local_path) {
                 println!("Error during pull: {}", e);
             }
         },
         "push" => {
-            let (local_path, remote_path) = get_paths();
+            let (local_path, remote_path) = get_paths("push");
             if let Err(e) = push(&local_path, &remote_path) {
                 println!("Error during push: {}", e);
             }
@@ -27,16 +27,23 @@ fn main() {
 }
 
 
-fn get_paths() -> (String, String) {
-    println!("Enter the source path:");
-    let mut source_path = String::new();
-    stdin().read_line(&mut source_path).expect("Failed to read source path");
+fn get_paths(action: &str) -> (String, String) {
+    let mut first_path = String::new();
+    let mut second_path = String::new();
 
-    println!("Enter the destination path:");
-    let mut destination_path = String::new();
-    stdin().read_line(&mut destination_path).expect("Failed to read destination path");
+    if action == "pull" {
+        println!("Enter the remote path:");
+        stdin().read_line(&mut first_path).expect("Failed to read remote path");
+        println!("Enter the local path:");
+        stdin().read_line(&mut second_path).expect("Failed to read destination path");
+    } else {
+        println!("Enter the local path:");
+        stdin().read_line(&mut first_path).expect("Failed to read local path");
+        println!("Enter the remote path:");
+        stdin().read_line(&mut second_path).expect("Failed to read destination path");
+    }
 
-    (source_path.trim().to_string(), destination_path.trim().to_string())
+    (first_path.trim().to_string(), second_path.trim().to_string())
 }
 
 
