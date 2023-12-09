@@ -13,12 +13,11 @@ enum Permission {
 
 // Function to verify permissions of a user on a given file path
 fn verify_permissions(user: &str, file_path: &str, permission: Permission) -> io::Result<()> {
-    // Check if the user string is empty
+    
     if user.is_empty() {
         return Err(io::Error::new(io::ErrorKind::NotFound, "Invalid user"));
     }
 
-    // Check if the file path is empty, not in a valid format, or does not exist
     if file_path.is_empty() {
         return Err(io::Error::new(io::ErrorKind::InvalidInput, "Invalid file path: empty"));
     }
@@ -29,7 +28,6 @@ fn verify_permissions(user: &str, file_path: &str, permission: Permission) -> io
         return Err(io::Error::new(io::ErrorKind::NotFound, "Invalid file path: path does not exist"));
     }
 
-    // Example logic for permission checking (can be replaced with real logic)
     if user == "valid_user" && file_path == "valid_path" && (permission == Permission::Read || permission == Permission::Execute) {
         return Err(io::Error::new(io::ErrorKind::PermissionDenied, "Insufficient permission"));
     }
