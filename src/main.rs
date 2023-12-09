@@ -24,6 +24,9 @@ fn main() -> io::Result<()> {
     command = command.trim().to_string();
 
     match command.as_str() {
+        "init" => {
+            
+        }
         "add" => {
             print!("Enter file path: ");
             stdout().flush()?; 
