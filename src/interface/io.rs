@@ -115,14 +115,25 @@ impl RepositoryInterface {
 
     /// Converts a file to a blob and adds it to the repository.
     /// Returns a Hash containing the reference to the blob
-    pub fn create_blob(&self, add_path: &PathBuf) -> std::io::Result<Hash> {
-        // Open the added file and read the data to a vector
-        let mut file = File::open(&add_path)?;
-        let mut data = Vec::new();
-        file.read_to_end(&mut data)?;
+    // pub fn create_blob(&self, add_path: &PathBuf) -> std::io::Result<Hash> {
+    //     // Open the added file and read the data to a vector
+    //     let mut file = File::open(&add_path)?;
+    //     let mut data = Vec::new();
+    //     file.read_to_end(&mut data)?;
 
+    //     // Hash the data and add it as a blob
+    //     let hash = Hash::from(&data);
+    //     self.add_object(hash.clone(), &data)?;
+
+    //     Ok(hash)
+    // }
+
+    /// Converts a file to a blob and adds it to the repository.
+    /// Returns a Hash containing the reference to the blob
+    pub fn create_blob(&self, data: &[u8]) -> std::io::Result<Hash> {
+        // Open the added file and read the data to a vector
         // Hash the data and add it as a blob
-        let hash = Hash::from(&data);
+        let hash = Hash::from(data);
         self.add_object(hash.clone(), &data)?;
 
         Ok(hash)
@@ -132,8 +143,13 @@ impl RepositoryInterface {
     pub fn create_dir_from_files(&self, file_paths: &Vec<&PathBuf>) -> std::io::Result<Directory> {
         file_paths.iter()
             .try_fold(Directory::new(), |mut acc, &path| {
+                // Read the data from the files
+                let mut file = File::open(&path)?;
+                let mut data = Vec::new();
+                file.read_to_end(&mut data)?;
+
                 // Save data as a blob and then insert a blobref to it in the dir
-                let hash = self.create_blob(path)?;
+                let hash = self.create_blob(&data)?;
                 let blob_ref = BlobRef::new(hash);
                 acc.insert_file_ref(path, blob_ref);
 
@@ -149,7 +165,7 @@ impl RepositoryInterface {
             .join(branch_name)
     }
 
-    /// Creates a branch
+    /// Creates a branch. Returns std::io::Err<()> if the branch already exists
     pub fn create_branch(&self, branch_name: &str, current_hash: Hash) -> std::io::Result<()> {
         let branch_path = self.get_branch_path(branch_name);
 
@@ -162,7 +178,8 @@ impl RepositoryInterface {
         Err(io::Error::new(io::ErrorKind::AlreadyExists, "Branch already exists"))
     }
 
-    /// Updates the hash for the specified branch
+    /// Updates the hash for the specified branch. Returns std::io::Error<()> if the branch 
+    /// does not exist.
     pub fn update_branch_head(&self, branch_name: &str, new_hash: Hash) -> std::io::Result<()> {
         let branch_path = self.get_branch_path(branch_name);
 
@@ -176,6 +193,35 @@ impl RepositoryInterface {
 
         Err(io::Error::new(io::ErrorKind::NotFound, "Branch does not exist"))
     }
+
+    /// Retrieves branch name from hash
+    pub fn get_branch_from_hash(&self, hash: Hash) -> Option<String> {
+        let branches_dir = self.get_repo_path()
+            .join(".my-dvcs")
+            .join("branches");
+
+        let entries = std::fs::read_dir(branches_dir).ok()?;
+        let hash_string = hash.as_string();
+
+        for entry in entries {
+            let entry = entry.ok()?;
+            let path = entry.path();
+            let mut file = File::open(&path).ok()?;
+
+            // Read the string from the file, compare it to the hash
+            // and return the branch name if it is the same
+            let mut file_hash = String::new();
+            file.read_to_string(&mut file_hash).ok()?;
+            
+            if file_hash.trim() == hash_string {
+                return path.file_name()
+                    .and_then(|os_str| os_str.to_str())
+                    .map(|s| s.to_owned());
+            }
+        }
+    
+        None
+    } 
 
     /// Returns the current overall head (not the branch head)
     pub fn get_current_head(&self) -> Option<Hash> {

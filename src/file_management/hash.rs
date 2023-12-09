@@ -9,7 +9,7 @@ impl Hash {
         Hash(digest(hash))
     }
 
-    pub fn from(vec: &Vec<u8>) -> Hash {
+    pub fn from(vec: &[u8]) -> Hash {
         Hash(digest(vec))
     }
 

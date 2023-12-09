@@ -100,10 +100,10 @@ pub fn commit(
 fn commit_test() -> std::io::Result<()> {
     use crate::interface::io::RepositoryInterface;
 
-    let repo = RepositoryInterface::new(&PathBuf::from(".")).unwrap();
+    let repo = RepositoryInterface::new(&PathBuf::from("test")).unwrap();
 
-    let path1 = PathBuf::from("test/test.txt");
-    let path2 = PathBuf::from("test/idk/test.txt");
+    let path1 = PathBuf::from("test.txt");
+    let path2 = PathBuf::from("idk/test.txt");
 
     let mut file_paths = vec![
         &path1,

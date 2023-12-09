@@ -8,7 +8,7 @@ pub fn checkout(file_system: RepositoryInterface, commit: Commit) -> io::Result<
     file_system.update_current_head(commit.get_hash());
 
     // Remove the files in the current directory
-    // file_system.clear_directory();
+    file_system.clear_directory();
 
     // Get the directory to reconstruct from and then reconstruct the files
     let directory: Directory = file_system.get_serialized_object(commit.get_dir_hash())?;
