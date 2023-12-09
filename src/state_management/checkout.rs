@@ -3,6 +3,8 @@ use crate::file_management::{hash::Hash, commit::{self, commit}};
 
 use crate::{interface::io::RepositoryInterface, file_management::{commit::Commit, hash::DVCSHash, directory::Directory}};
 
+/// Replaces the files in the repository with that of a specific commit.
+/// Also updates the head to the specified commit
 pub fn checkout(file_system: RepositoryInterface, commit: Commit) -> io::Result<()> {
     // Move the head to the commit (set it to the hash)
     file_system.update_current_head(commit.get_hash());
@@ -18,13 +20,10 @@ pub fn checkout(file_system: RepositoryInterface, commit: Commit) -> io::Result<
             let data = file_system.get_object(blob_ref.get_content_hash().clone())?;
 
             // Reconstruct the directory structure
-            // Might throw an error if there is no parent
-            // println!("Directory Path: {}", &dir_path.display());
             std::fs::create_dir_all(&dir_path.parent().unwrap())?;
             
             // Recreate the file and copy the data to it
             let dir_path = file_system.get_repo_path().join(&dir_path);
-            println!("Creating: {}", &dir_path.display());
             let mut file = File::create(&dir_path)?;
             file.write_all(&data)?;
             file.flush()?;
@@ -44,8 +43,8 @@ fn checkout_test() -> std::io::Result<()> {
     let path2 = PathBuf::from("idk/test.txt");
 
     let mut file_paths = vec![
-        &path1,
-        &path2
+        path1,
+        path2
     ];
 
     let dir = repo.create_dir_from_files(&file_paths)?;

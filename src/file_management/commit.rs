@@ -90,11 +90,8 @@ pub fn commit(
     };
 
     // Serialize the commit and directory
-    println!("Need to add serialized obj");
     file_system.add_serialized_object(&new_dir)?;
-    println!("Serialized directory");
     file_system.add_serialized_object(&commit)?;
-    println!("Serialized commit");
 
     Ok(commit)
 }
@@ -109,8 +106,8 @@ fn commit_test() {
     let path2 = PathBuf::from("idk/test.txt");
 
     let mut file_paths = vec![
-        &path1,
-        &path2
+        path1,
+        path2
     ];
 
     let dir = repo.create_dir_from_files(&file_paths).unwrap();

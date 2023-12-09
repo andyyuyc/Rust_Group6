@@ -1,7 +1,7 @@
 use crate::{file_management::{hash::{Hash, DVCSHash}, directory::{Directory, BlobRef}, commit::Commit}, interface::io::RepositoryInterface};
 use std::{io, collections::{HashMap, HashSet, VecDeque}};
 
-pub fn merge(file_system: RepositoryInterface, commit1: Commit, commit2: Commit) -> io::Result<()> { 
+pub fn merge(file_system: RepositoryInterface, commit1: Commit, commit2: Commit) -> io::Result<Directory> { 
     // Find a common ancestor
     let parent_commit = get_common_ancestor(&file_system, &commit1, &commit2)?;
 
@@ -9,9 +9,6 @@ pub fn merge(file_system: RepositoryInterface, commit1: Commit, commit2: Commit)
     let parent_dir: Directory = file_system.get_serialized_object(parent_commit.get_dir_hash())?;
     let commit1_dir: Directory = file_system.get_serialized_object(commit1.get_dir_hash())?;
     let commit2_dir: Directory = file_system.get_serialized_object(commit2.get_dir_hash())?;
-
-    // init merged directory
-    let mut merged_dir = Directory::new();
 
     // Get all files in all directories
     let all_files: HashSet<_> = parent_dir.get_key_value_pairs()
@@ -21,7 +18,7 @@ pub fn merge(file_system: RepositoryInterface, commit1: Commit, commit2: Commit)
         .collect();
 
     all_files.into_iter()
-        .try_for_each(|(path, blob_ref)| {
+        .try_fold(Directory::new(), |mut merged_dir, (path, blob_ref)| {
             let ancestor_data = parent_dir.get_file_ref(&path);
             let commit1_data = commit1_dir.get_file_ref(&path);
             let commit2_data = commit2_dir.get_file_ref(&path);
@@ -38,7 +35,7 @@ pub fn merge(file_system: RepositoryInterface, commit1: Commit, commit2: Commit)
                         );
                         return Err(io::Error::new(io::ErrorKind::Other, message))
                     }
-                    Ok(())
+                    Ok(merged_dir)
                 },
                 (Some(ancestor), None, Some(ref2)) => {
                     // If branch 2 modifies the file but branch 1 deletes
@@ -51,7 +48,7 @@ pub fn merge(file_system: RepositoryInterface, commit1: Commit, commit2: Commit)
                         );
                         return Err(io::Error::new(io::ErrorKind::Other, message))
                     }
-                    Ok(())
+                    Ok(merged_dir)
                 }
                 // What is ref1 == ref2 != ancestor
                 // Might have to think more about this?
@@ -87,7 +84,7 @@ pub fn merge(file_system: RepositoryInterface, commit1: Commit, commit2: Commit)
                             return Err(io::Error::new(io::ErrorKind::Other, merged_content.unwrap_err()))
                         }
                     }
-                    Ok(())
+                    Ok(merged_dir)
                 },
                 (None, Some(ref1), Some(ref2)) => {
                     if ref1.get_content_hash() == ref2.get_content_hash() {
@@ -107,8 +104,8 @@ pub fn merge(file_system: RepositoryInterface, commit1: Commit, commit2: Commit)
                         // If the merge works out, create a new blob and blobref
                         if let Ok(string) = merged_content {
                             let blob_hash = file_system.create_blob(string.as_bytes())?;
-                                let blob_ref = BlobRef::new(blob_hash);
-                                merged_dir.insert_file_ref(&path, blob_ref);
+                            let blob_ref = BlobRef::new(blob_hash);
+                            merged_dir.insert_file_ref(&path, blob_ref);
                         } else {
                             return Err(
                                 io::Error::new(io::ErrorKind::Other, 
@@ -121,14 +118,14 @@ pub fn merge(file_system: RepositoryInterface, commit1: Commit, commit2: Commit)
                             );
                         }
                     }
-                    Ok(())
+                    Ok(merged_dir)
                 },
                 (None, Some(ref1), None) | (None, None, Some(ref1)) => {
                     // Just add it
                     merged_dir.insert_file_ref(&path, ref1.clone());
-                    Ok(())
+                    Ok(merged_dir)
                 },
-                (_, _, _) => Ok(())
+                (_, _, _) => Ok(merged_dir)
             }
         })
 }

@@ -122,21 +122,6 @@ impl RepositoryInterface {
 
     /// Converts a file to a blob and adds it to the repository.
     /// Returns a Hash containing the reference to the blob
-    // pub fn create_blob(&self, add_path: &PathBuf) -> std::io::Result<Hash> {
-    //     // Open the added file and read the data to a vector
-    //     let mut file = File::open(&add_path)?;
-    //     let mut data = Vec::new();
-    //     file.read_to_end(&mut data)?;
-
-    //     // Hash the data and add it as a blob
-    //     let hash = Hash::from(&data);
-    //     self.add_object(hash.clone(), &data)?;
-
-    //     Ok(hash)
-    // }
-
-    /// Converts a file to a blob and adds it to the repository.
-    /// Returns a Hash containing the reference to the blob
     pub fn create_blob(&self, data: &[u8]) -> std::io::Result<Hash> {
         // Open the added file and read the data to a vector
         // Hash the data and add it as a blob
@@ -148,9 +133,9 @@ impl RepositoryInterface {
 
     /// Instantiates a directory from a [`&Vec<&PathBuf>`] where each file_path is a relative file path
     /// from the repository
-    pub fn create_dir_from_files(&self, file_paths: &Vec<&PathBuf>) -> std::io::Result<Directory> {
+    pub fn create_dir_from_files(&self, file_paths: &Vec<PathBuf>) -> std::io::Result<Directory> {
         file_paths.iter()
-            .try_fold(Directory::new(), |mut acc, &path| {
+            .try_fold(Directory::new(), |mut acc, path| {
                 // Read the data from the files
                 let mut file = File::open(self.dir_path.join(&path))?;
                 let mut data = Vec::new();
@@ -159,7 +144,7 @@ impl RepositoryInterface {
                 // Save data as a blob and then insert a blobref to it in the dir
                 let hash = self.create_blob(&data)?;
                 let blob_ref = BlobRef::new(hash);
-                acc.insert_file_ref(path, blob_ref);
+                acc.insert_file_ref(&path, blob_ref);
 
                 Ok(acc)
         })
@@ -173,16 +158,18 @@ impl RepositoryInterface {
             .join(branch_name)
     }
 
-    /// Creates a branch. Returns std::io::Err<()> if the branch already exists
+    /// Creates a branch a sets its head to the specified hash. Returns std::io::Err<()> if the branch already exists
     pub fn create_branch(&self, branch_name: &str, current_hash: Hash) -> std::io::Result<()> {
         let branch_path = self.get_branch_path(branch_name);
 
+        // If the branch does not exist, create it
         if !branch_path.exists() {
             // Create the file and put the hash inside 
             let mut file = File::create(branch_path)?;
             file.write_all(current_hash.as_string().as_bytes())?;
         } 
 
+        // Otherwise, return an Err
         Err(io::Error::new(io::ErrorKind::AlreadyExists, "Branch already exists"))
     }
 
@@ -191,18 +178,18 @@ impl RepositoryInterface {
     pub fn update_branch_head(&self, branch_name: &str, new_hash: Hash) -> std::io::Result<()> {
         let branch_path = self.get_branch_path(branch_name);
 
+        // If the branch exists, update it
         if branch_path.exists() {
-            let mut file = OpenOptions::new()
-                .write(true)
-                .open(branch_path)?;
-
+            let mut file = File::create(branch_path)?;
             file.write_all(new_hash.as_string().as_bytes());
         }
 
+        // Otherwise, return an Err
         Err(io::Error::new(io::ErrorKind::NotFound, "Branch does not exist"))
     }
 
-    /// Retrieves branch name from hash
+    /// Retrieves branch name from hash. Returns None if no branch exists
+    /// with the hash or the hash is invalid
     pub fn get_branch_from_hash(&self, hash: Hash) -> Option<String> {
         let branches_dir = self.get_repo_path()
             .join(".my-dvcs")
@@ -211,6 +198,7 @@ impl RepositoryInterface {
         let entries = std::fs::read_dir(branches_dir).ok()?;
         let hash_string = hash.as_string();
 
+        // Go through every branch file and check if there is a hash match
         for entry in entries {
             let entry = entry.ok()?;
             let path = entry.path();
@@ -231,17 +219,36 @@ impl RepositoryInterface {
         None
     } 
 
+    /// Retrieves the hash for a given branch. Returns an Err if the branch does
+    /// not exist
+    pub fn get_hash_from_branch(&self, branch_name: &str) -> std::io::Result<Hash> {
+        let branch_path = self.get_branch_path(branch_name);
+        let mut file = File::open(branch_path)?;
+
+        // Read the hash into a string and convert it to a hash
+        let mut file_hash = String::new();
+        file.read_to_string(&mut file_hash)?;
+
+        Ok(Hash::from_hashed(&file_hash))
+    }
+
     /// Returns the current overall head (not the branch head)
     pub fn get_current_head(&self) -> Option<Hash> {
         let head_path = self.get_repo_path()
             .join(".my-dvcs")
             .join("head");
-
         let mut file = File::open(head_path).ok()?;
-        let mut head = String::new();
 
-        // Copy the hash from the head file  and convert it to a hash
+        // Copy the hash from the head file into a string
+        let mut head = String::new();
         file.read_to_string(&mut head).ok()?;
+
+        // If the string is empty there is no head
+        if head.trim().len() == 0 {
+            return None
+        }
+
+        // Convert the string to a hash and return it 
         Some(Hash::from_hashed(&head))
     } 
 
