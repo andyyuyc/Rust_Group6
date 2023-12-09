@@ -23,6 +23,7 @@ impl RepositoryInterface {
     /// Returns true if the specified directory contains a repo
     pub fn is_repo(dir_path: &PathBuf) -> bool {
         if dir_path.is_dir() {
+            println!("Is a directory");
             if let Ok(entries) = std::fs::read_dir(dir_path) {
                 return entries.into_iter()
                     .filter_map(|entry| entry.ok())
@@ -56,10 +57,13 @@ impl RepositoryInterface {
         let relative_path = Self::get_relative_obj_path(hash);
         let path = self.dir_path.join(&relative_path);
 
+        println!("{}", &path.display());
+
         if !path.exists() {
             // Create directory for prefix if nonexistant
-            let parent_path = relative_path.parent()
+            let parent_path = path.parent()
                 .ok_or(io::Error::new(io::ErrorKind::Other, "Invalid Path"))?;
+            println!("Creating directory for {}", &parent_path.display());
             std::fs::create_dir_all(parent_path)?;
 
             // Create the new object file
@@ -93,8 +97,11 @@ impl RepositoryInterface {
     {
         // Serialize the object and write it to the file with the hash
         let hash = obj.get_hash();
+        println!("created hash");
         let serialized_data = serde_json::to_string(obj)?;
+        println!("serialized data");
         self.add_object(hash, serialized_data.as_bytes())?;
+        println!("added object");
 
         Ok(())
     }
@@ -139,12 +146,13 @@ impl RepositoryInterface {
         Ok(hash)
     }
 
-    /// Instantiates a directory from a [`&Vec<&PathBuf>`]
+    /// Instantiates a directory from a [`&Vec<&PathBuf>`] where each file_path is a relative file path
+    /// from the repository
     pub fn create_dir_from_files(&self, file_paths: &Vec<&PathBuf>) -> std::io::Result<Directory> {
         file_paths.iter()
             .try_fold(Directory::new(), |mut acc, &path| {
                 // Read the data from the files
-                let mut file = File::open(&path)?;
+                let mut file = File::open(self.dir_path.join(&path))?;
                 let mut data = Vec::new();
                 file.read_to_end(&mut data)?;
 

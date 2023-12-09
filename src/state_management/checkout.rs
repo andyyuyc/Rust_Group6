@@ -21,8 +21,10 @@ pub fn checkout(file_system: RepositoryInterface, commit: Commit) -> io::Result<
             // Might throw an error if there is no parent
             // println!("Directory Path: {}", &dir_path.display());
             std::fs::create_dir_all(&dir_path.parent().unwrap())?;
-                    
+            
             // Recreate the file and copy the data to it
+            let dir_path = file_system.get_repo_path().join(&dir_path);
+            println!("Creating: {}", &dir_path.display());
             let mut file = File::create(&dir_path)?;
             file.write_all(&data)?;
             file.flush()?;

@@ -90,14 +90,17 @@ pub fn commit(
     };
 
     // Serialize the commit and directory
+    println!("Need to add serialized obj");
     file_system.add_serialized_object(&new_dir)?;
+    println!("Serialized directory");
     file_system.add_serialized_object(&commit)?;
+    println!("Serialized commit");
 
     Ok(commit)
 }
 
 #[test]
-fn commit_test() -> std::io::Result<()> {
+fn commit_test() {
     use crate::interface::io::RepositoryInterface;
 
     let repo = RepositoryInterface::new(&PathBuf::from("test")).unwrap();
@@ -110,9 +113,9 @@ fn commit_test() -> std::io::Result<()> {
         &path2
     ];
 
-    let dir = repo.create_dir_from_files(&file_paths)?;
+    let dir = repo.create_dir_from_files(&file_paths).unwrap();
+
+    println!("Created directory");
     let commit = commit("Justin", &vec![], dir, "Initial commit", &repo).unwrap();
-    
-    Ok(())
 }
 
