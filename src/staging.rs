@@ -75,35 +75,3 @@ fn validate_repository_path(repo_path: &Path) -> io::Result<()> {
     }
     Ok(())
 }
-
-fn main() -> io::Result<()> {
-    let mut repository_path = String::new();
-    let mut command = String::new();
-    let mut file_path = String::new();
-
-    print!("Enter repository path: ");
-    stdout().flush()?; 
-    stdin().read_line(&mut repository_path)?;
-    repository_path = repository_path.trim().to_string();
-
-    print!("Enter command (add/remove): ");
-    stdout().flush()?;
-    stdin().read_line(&mut command)?;
-    command = command.trim().to_string();
-
-    print!("Enter file path: ");
-    stdout().flush()?; 
-    stdin().read_line(&mut file_path)?;
-    file_path = file_path.trim().to_string();
-
-    match command.as_str() {
-        "add" => stage_add(&repository_path, &file_path)?,
-        "remove" => stage_remove(&repository_path, &file_path)?,
-        _ => {
-            eprintln!("Invalid command: {}", command);
-            return Err(io::Error::new(io::ErrorKind::InvalidInput, "Invalid command"));
-        }
-    }
-
-    Ok(())
-}

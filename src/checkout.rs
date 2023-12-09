@@ -1,29 +1,30 @@
-use std::{io::{self, Write, Error}, fs::File};
+use std::{io::{self, Write, Error}, fs::File, path::PathBuf};
 use crate::file_management::{hash::Hash, commit::{self, commit}};
 
-use crate::{interface::io::{get_serialized_object, get_object}, file_management::{commit::Commit, hash::DVCSHash, directory::Directory}};
+use crate::{interface::io::RepositoryInterface, file_management::{commit::Commit, hash::DVCSHash, directory::Directory}};
 
-fn checkout(hash: Hash) -> io::Result<()> {
-    // Grab the hash of the branch from 
-    let commit: Commit = get_serialized_object(hash.clone())?;
-
-    // Move the head to the branch (set it to the hash)
+pub fn checkout(file_system: RepositoryInterface, commit: Commit) -> io::Result<()> {
+    // Move the head to the commit (set it to the hash)
+    file_system.update_current_head(commit.get_hash());
 
     // Remove the files in the current directory
+    file_system.clear_directory();
 
     // Get the directory to reconstruct from and then reconstruct the files
-    let directory: Directory = get_serialized_object(commit.get_dir_hash())?;
+    let directory: Directory = file_system.get_serialized_object(commit.get_dir_hash())?;
     directory.get_key_value_pairs()
         .try_for_each(|(dir_path, blob_ref)| {
             // Get data from the blob 
-            let data = get_object(blob_ref.get_content_hash().clone())?;
+            let data = file_system.get_object(blob_ref.get_content_hash().clone())?;
 
             // Reconstruct the directory structure
             // Might throw an error if there is no parent
-            println!("Directory Path: {}", &dir_path.display());
+            // println!("Directory Path: {}", &dir_path.display());
             std::fs::create_dir_all(&dir_path.parent().unwrap())?;
-                    
+            
             // Recreate the file and copy the data to it
+            let dir_path = file_system.get_repo_path().join(&dir_path);
+            println!("Creating: {}", &dir_path.display());
             let mut file = File::create(&dir_path)?;
             file.write_all(&data)?;
             file.flush()?;
@@ -34,20 +35,23 @@ fn checkout(hash: Hash) -> io::Result<()> {
     Ok(())
 }
 
+
 #[test]
-fn checkout_test() {
-    use crate::interface::io::*;
-    use serde::{Serialize, Deserialize};
-    use std::io::Read;
+fn checkout_test() -> std::io::Result<()> {
+    let repo = RepositoryInterface::new(&PathBuf::from("test")).unwrap();
 
-    let mut changes = vec![];
-    
-    changes.push(commit::Change::Add {path: "test/test.txt"});
-    changes.push(commit::Change::Add {path: "test/test2.txt"});
-    changes.push(commit::Change::Add {path: "test/idk/something.txt" });
+    let path1 = PathBuf::from("test.txt");
+    let path2 = PathBuf::from("idk/test.txt");
 
-    let commit = commit("Justin", None, &changes, "Initial commit").unwrap();
+    let mut file_paths = vec![
+        &path1,
+        &path2
+    ];
 
-    std::fs::remove_dir_all("test");
-    checkout(commit.get_hash());
+    let dir = repo.create_dir_from_files(&file_paths)?;
+    let commit = commit("Justin", &vec![], dir, "Initial commit", &repo).unwrap();
+
+    checkout(repo, commit);
+
+    Ok(())
 }
