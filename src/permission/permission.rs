@@ -28,7 +28,7 @@ fn verify_permissions(user: &str, file_path: &str, permission: Permission) -> io
         return Err(io::Error::new(io::ErrorKind::NotFound, "Invalid file path: path does not exist"));
     }
 
-    if user == "valid_user" && file_path == "valid_path" && (permission == Permission::Read || permission == Permission::Execute) {
+    if permission == Permission::Read || permission == Permission::Execute {
         return Err(io::Error::new(io::ErrorKind::PermissionDenied, "Insufficient permission"));
     }
 
@@ -58,7 +58,7 @@ fn main() {
         },
     };
 
-    // Verify permissions and print the result
+    // Verify permissions
     let result = verify_permissions(&user, &file_path, permission);
     match result {
         Ok(()) => println!("Permission granted"),
