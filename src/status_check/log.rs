@@ -23,7 +23,7 @@ pub fn dvcs_log(commit: &Commit) -> std::io::Result<()> {
         .open(log_file_path)?;
 
     // Write the commit details to a file
-    writeln!(file, "{}", commit)?;
+    writeln!(file, "{} \n", commit)?;
 
     Ok(())
 }

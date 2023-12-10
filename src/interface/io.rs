@@ -162,6 +162,7 @@ impl RepositoryInterface {
             // Create the file and put the hash inside 
             let mut file = File::create(branch_path)?;
             file.write_all(current_hash.as_string().as_bytes())?;
+            return Ok(())
         } 
 
         // Otherwise, return an Err
@@ -229,8 +230,11 @@ impl RepositoryInterface {
         for entry in entries {  
             let entry = entry.ok()?;
             let path = entry.path();
+            let file_name = path.file_name()
+                .and_then(|os_str| os_str.to_str())
+                .map(|s| s.to_owned())?;
 
-            branch_names.push(path.display().to_string());            
+            branch_names.push(file_name);            
         }
 
         Some(branch_names)

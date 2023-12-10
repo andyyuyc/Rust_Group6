@@ -149,12 +149,15 @@ pub fn commit_cmd(message: &str, author: &str) -> std::io::Result<Commit> {
             // No branch - create a branch called master
             println!("No branch - creating master branch");
             repo.create_branch("master", new_commit_hash.clone())
-                .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to create master branch."));
+                .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to create master branch."))?;
         },
     }
 
     // Update the repo head
     repo.update_current_head(new_commit_hash);
+
+    clear_staged_files(&curr_path)
+        .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to clear staging area"))?;
 
     Ok(new_commit)
 }

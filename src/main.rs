@@ -173,7 +173,7 @@ async fn main() {
 
                 show_diff(&dir1, &dir2);
             } else {    
-                println!("Correct usage: dvcs diff")
+                println!("Correct usage: dvcs diff <dir1> <dir2>")
             }
         },
         "log" => {
