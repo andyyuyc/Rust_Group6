@@ -91,3 +91,25 @@ fn validate_repository_path(repo_path: &Path) -> io::Result<()> {
     }
     Ok(())
 }
+
+pub fn stage_all_files(repo_path: &Path) -> io::Result<()> {
+    let entries = std::fs::read_dir(repo_path)?;
+
+    for entry in entries {
+        let entry = entry?;
+        let path = entry.path();
+
+        // Getting the relative path
+        if let Ok(relative_path) = path.strip_prefix(repo_path) {
+            stage_add(
+                &repo_path.display().to_string(), 
+                &relative_path.display().to_string()
+            )?;
+        } else {
+            // Handle the case where strip_prefix fails
+            return Err(std::io::Error::new(io::ErrorKind::Other, "Failed to strip prefix from path during staging"));
+        }
+    }
+
+    Ok(())
+}

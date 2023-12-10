@@ -3,8 +3,9 @@ use std::io;
 use std::io::Error;
 
 use file_management::commit::{Commit, self, commit_cmd};
+use initialization::{init::init, clone::clone_local};
 use interface::io::RepositoryInterface;
-use revisions::staging::stage_add;
+use revisions::{staging::{stage_add, stage_all_files}, status};
 use state_management::{merge::{merge, merge_cmd}, branch::{get_branches_cmd, create_branch_cmd}};
 use view::cat::cat;
 
@@ -17,14 +18,14 @@ pub mod state_management;
 pub mod diff;
 pub mod revisions;
 pub mod view;
+pub mod initialization;
 
 
 use std::io::{Write, stdin, stdout, ErrorKind};
 use std::env;
 
 // main.rs
-// use tokio::runtime;
-// mod init;
+use tokio::runtime;
 // mod clone;
 // mod status;
 // mod errorhandling;
@@ -35,6 +36,7 @@ use std::env;
 async fn main() {
     let args: Vec<String> = std::env::args().collect();
     let path = std::env::current_dir().unwrap_or(PathBuf::from("."));
+    let path_as_str = &path.as_os_str().to_string_lossy().to_string();
 
     if args.len() < 2 {
         println!("Usage: dvcs <command>");
@@ -42,14 +44,28 @@ async fn main() {
     }
 
     match args[1].as_str() {
-        // "init" => init::init(),
-        // "clone" => clone::clone(),
+        "init" => {
+            match initialization::init::init_repo(&path_as_str) {
+                Ok(_) => println!("Successfully initialized repo"),
+                Err(_) => println!("Failed to initialize repo"),
+            };
+        },
+        "clone" => {
+            if args.len() == 3 {
+                match clone_local(&path_as_str, &args[2]) {
+                    Ok(_) => println!("Successfully clone to local"),
+                    Err(_) => println!("Failed to clone"),
+                }
+            } else {
+                println!("Correct Usage: dvcs clone <other-dir>")
+            }
+        },
         // "errorhandling" => errorhandling::errorhandling(),
-        // "status" => {
-        //     if let Err(e) = status::status().await {
-        //         println!("Error: {}", e);
-        //     }
-        // },
+        "status" => {
+            if let Err(e) = status::status().await {
+                println!("Error: {}", e);
+            } 
+        },
         "commit" => {
             if args.len() == 3 {
                 let msg = &args[2];
@@ -91,24 +107,32 @@ async fn main() {
             if args.len() == 3 {
                 match args[2].as_str() {
                     "*" => {
-                        stage_add(&path, )
+                        match stage_all_files(&path) {
+                            Ok(_) => println!("Successfully staged all files"),
+                            Err(e) => println!("Erro: {}", e),
+                        }
                     },
-                    _ => {
-                        stage_add()
+                    path => {
+                        match stage_add(&path_as_str, path) {
+                            Ok(_) => {},
+                            Err(e) => println!("Error: {}", e)
+                        }
                     }
                 }
             } else {
                 println!("Correct usage: dvcs add <file_path> | dvcs add *")
             }
-        }
-        _ => println!("Unknown command"),
+        },
         "cat" => {
             if args.len() == 2 {
                 match cat(&path) {
                     Ok(content) => println!("{}", content),
                     Err(_) => println!("Error: Failed to read file"),
                 };
-            } 
-        }
+            } else {
+                println!("Correct usage: dvcs cat <file_path>")
+            }
+        },
+        _ => println!("Unknown command"),
     }
 }
