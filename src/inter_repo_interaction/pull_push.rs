@@ -75,7 +75,7 @@ fn synchronize_changes(source_path: &str, dest_path: &str, is_pull_operation: bo
 }
 
 
-fn pull(remote_path: &str, local_path: &str) -> io::Result<()> {
+pub fn pull(remote_path: &str, local_path: &str) -> io::Result<()> {
     let remote_files = fs::read_dir(remote_path)?;
     let mut conflict_occurred = false;
 
@@ -106,7 +106,7 @@ fn pull(remote_path: &str, local_path: &str) -> io::Result<()> {
 }
 
 
-fn push(local_path: &str, remote_path: &str) -> io::Result<()> {
+pub fn push(local_path: &str, remote_path: &str) -> io::Result<()> {
     let local_files = fs::read_dir(local_path)?;
     let mut conflict_occurred = false;
 
