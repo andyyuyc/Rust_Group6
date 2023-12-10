@@ -253,15 +253,15 @@ impl RepositoryInterface {
         Ok(Hash::from_hashed(&file_hash))
     }
 
-    /// Returns the current overall head (not the branch head)
+    /// Returns the branch that the curr head points to (not the branch head)
     /// If the head file is empty, returns None
-    pub fn get_current_head(&self) -> Option<Hash> {
+    pub fn get_current_head(&self) -> Option<String> {
         let head_path = self.get_repo_path()
             .join(".my-dvcs")
             .join("head");
         let mut file = File::open(head_path).ok()?;
 
-        // Copy the hash from the head file into a string
+        // Copy the branch from the head file
         let mut head = String::new();
         file.read_to_string(&mut head).ok()?;
 
@@ -270,20 +270,26 @@ impl RepositoryInterface {
             return None
         }
 
-        // Convert the string to a hash and return it 
-        Some(Hash::from_hashed(&head))
+        // Return the branch
+        Some(head)
     } 
 
-    /// Updates the hash for the specified branch
-    pub fn update_current_head(&self, new_hash: Hash) -> Option<()> {
+    /// Moves the head to the specified branch
+    pub fn update_current_head(&self, branch: &str) -> Option<()> {
         let head_path = self.get_repo_path()
             .join(".my-dvcs")
             .join("head");
-    
-        let mut file = File::create(head_path).ok()?;
-        file.write_all(new_hash.as_string().as_bytes()).ok()?;
 
-        Some(())
+        // If the branch actually exists, write to it to the head
+        // Else return a None value
+        if self.get_branch_path(&branch).exists() {
+            let mut file = File::create(head_path).ok()?;
+            file.write_all(branch.as_bytes()).ok()?;
+    
+            Some(())
+        } else {
+            None
+        }
     }
 
     /// Clears the directory

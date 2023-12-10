@@ -160,10 +160,16 @@ pub fn merge_cmd(other_branch: &str) -> std::io::Result<()> {
         .ok_or(Error::new(io::ErrorKind::Other, "Directory is not a repo"))?;
 
     // Get the branch you are merging into
-    let merge_into_hash = repo.get_current_head()
+    // let merge_into_hash = repo.get_current_head()
+    //     .ok_or(Error::new(io::ErrorKind::Other, "Failed to retrieve current head"))?;
+    // let merge_into = repo.get_serialized_object(merge_into_hash.clone())
+    //     .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to retrieve target branch"))?;
+    let merge_into_branch = repo.get_current_head()
         .ok_or(Error::new(io::ErrorKind::Other, "Failed to retrieve current head"))?;
+    let merge_into_hash = repo.get_hash_from_branch(&merge_into_branch)
+        .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to retrieve current branch"))?;
     let merge_into = repo.get_serialized_object(merge_into_hash.clone())
-        .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to retrieve target branch"))?;
+        .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to retrieve current branch"))?;
 
     // Get the other branch
     let merge_from_hash = repo.get_hash_from_branch(other_branch)
@@ -185,11 +191,12 @@ pub fn merge_cmd(other_branch: &str) -> std::io::Result<()> {
 
     // Update branch head 
     let branch = repo.get_branch_from_hash(merge_into_hash.clone())
-        .ok_or(Error::new(io::ErrorKind::Other, "Failed to update branch head to merge commit"))?;
-    repo.update_branch_head(&branch, merge_into_hash);
+        .ok_or(Error::new(io::ErrorKind::Other, "Failed to retrieve branch hash"))?;
+    repo.update_branch_head(&branch, merge_into_hash)
+        .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to update branch head to merge commit"))?;
 
-    // Update the repo head
-    repo.update_current_head(commit.get_hash());
+    // // Update the repo head NOT NECESSARY SINCE THE HEAD DOES NOT CHANGE
+    // repo.update_current_head(commit.get_hash());
 
     Ok(())
 }

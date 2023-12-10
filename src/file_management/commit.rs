@@ -106,6 +106,7 @@ pub fn commit_cmd(message: &str, author: &str) -> std::io::Result<Commit> {
     let staged_files = get_staged_files(&curr_path)
         .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to retrieve files from staging area"))?;
 
+    // Return Err if there is nothing in the staging area
     if staged_files.len() == 0 {
         println!("Nothing in staged files");
         return Err(Error::new(io::ErrorKind::Other, "Nothing in staged files"));
@@ -113,7 +114,9 @@ pub fn commit_cmd(message: &str, author: &str) -> std::io::Result<Commit> {
 
     // Get parent hash
     let mut parent_hash = Vec::new();
-    if let Some(head_commit_hash) = repo.get_current_head() {
+    if let Some(curr_branch) = repo.get_current_head() {
+        let head_commit_hash = repo.get_hash_from_branch(&curr_branch)
+            .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to retrieve parent commit"))?;
         parent_hash.push(head_commit_hash);
     }
 
@@ -135,14 +138,11 @@ pub fn commit_cmd(message: &str, author: &str) -> std::io::Result<Commit> {
     // Update the branch head 
     let new_commit_hash = new_commit.get_hash();
     match repo.get_current_head() {
-        Some(curr_head) => {
+        Some(curr_branch) => {
             // Existence of current head means there is at least 1 branch
             // Get the current branch and update the hash
             // WHAT IF YOU CHECKOUT TO A NON HEAD - YOU GET NO BRANCH FROM IT
-            let branch_name = repo.get_branch_from_hash(curr_head)
-                .ok_or(Error::new(io::ErrorKind::Other, "On a non head commit."))?;
-            println!("Updating branch: {}", &branch_name);
-            repo.update_branch_head(&branch_name, new_commit_hash.clone())
+            repo.update_branch_head(&curr_branch, new_commit_hash.clone())
                 .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to update current branch head"))?;
         },
         None => {
@@ -153,8 +153,8 @@ pub fn commit_cmd(message: &str, author: &str) -> std::io::Result<Commit> {
         },
     }
 
-    // Update the repo head
-    repo.update_current_head(new_commit_hash);
+    // // // Update the repo head NO NEED TO UPDATE THE CURR HEAD BRANCH
+    // repo.update_current_head(new_commit_hash); 
 
     clear_staged_files(&curr_path)
         .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to clear staging area"))?;

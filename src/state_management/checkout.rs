@@ -7,7 +7,10 @@ use crate::{interface::io::RepositoryInterface, file_management::{commit::Commit
 /// Also updates the head to the specified commit
 pub fn checkout(file_system: RepositoryInterface, commit: Commit) -> io::Result<()> {
     // Move the head to the commit (set it to the hash)
-    file_system.update_current_head(commit.get_hash());
+    let curr_hash = commit.get_hash();
+    let curr_branch = file_system.get_branch_from_hash(curr_hash)
+        .ok_or(Error::new(io::ErrorKind::Other, "Directory is not a repo"))?;
+    file_system.update_current_head(&curr_branch);
 
     // Remove the files in the current directory
     file_system.clear_directory();
