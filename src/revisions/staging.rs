@@ -13,6 +13,15 @@ pub fn stage_add(repository_path: &str, file_path: &str) -> io::Result<()> {
         return Err(io::Error::new(io::ErrorKind::NotFound, "File does not exist"));
     }
 
+    if file_to_track.is_dir() {
+        return Err(io::Error::new(io::ErrorKind::InvalidInput, "Cannot add directories to staging area"));
+    }
+    if let Some(extension) = file_to_track.extension() {
+        if extension == "dvcs" {
+            return Err(io::Error::new(io::ErrorKind::InvalidInput, "Cannot add .dvcs files to staging area"));
+        }
+    }
+
     let mut tracked_files = read_files(&repo_path)?;
 
     if !tracked_files.contains(file_path) {
