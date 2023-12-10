@@ -14,19 +14,27 @@ pub fn dvcs_log(commit: &Commit) -> std::io::Result<()> {
     let logs_dir = dvcs_dir.join("logs");
     create_dir_all(&logs_dir)?;
 
-    // Open the log file and create it if it doesn't exist
+    // Log file path
     let log_file_path = logs_dir.join("log.txt");
-    let mut file = OpenOptions::new()
-        .write(true)
-        .append(true)
-        .create(true)
-        .open(log_file_path)?;
 
-    // Write the commit details to a file
-    writeln!(file, "{} \n", commit)?;
+    // Read the existing content of the log file
+    let mut existing_content = String::new();
+    if let Ok(mut file) = File::open(&log_file_path) {
+        file.read_to_string(&mut existing_content)?;
+    }
+
+    // Open the log file for writing
+    let mut file = File::create(log_file_path)?;
+
+    // Write the new commit details at the top of the file
+    writeln!(file, "{}\n", commit)?;
+
+    // Write the original content after the new commit
+    write!(file, "{}", existing_content)?;
 
     Ok(())
 }
+
 
 
 // Read the file
