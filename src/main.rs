@@ -148,6 +148,26 @@ async fn main() {
                 println!("Correct usage: dvcs add <file_path> | dvcs add *")
             }
         },
+        "remove" => {
+            if args.len() == 3 {
+                match args[2].as_str() {
+                    "*" => {
+                        match stage_all_files(&path) {
+                            Ok(_) => println!("Successfully removed files"),
+                            Err(e) => println!("Erro: {}", e),
+                        }
+                    },
+                    path => {
+                        match stage_remove(&path_as_str, path) {
+                            Ok(_) => {},
+                            Err(e) => println!("Error: {}", e)
+                        }
+                    }
+                }
+            } else {
+                println!("Correct usage: dvcs remove <file_path> | dvcs remove *")
+            }
+        },
         "cat" => {
             if args.len() == 2 {
                 match cat(&path) {
@@ -172,5 +192,29 @@ async fn main() {
             }
         }
         _ => println!("Unknown command"),
+        "pull" => {
+            if args.len() == 4 {
+                let local_path = &args[2];
+                let remote_path = &args[3];
+                match pull(remote_path, local_path) {
+                    Ok(_) => println!("Successfully pulled from remote"),
+                    Err(e) => println!("Error during pull: {}", e),
+                }
+            } else {
+                println!("Correct usage: dvcs pull <local_path> <remote_path>");
+            }
+        },
+        "push" => {
+            if args.len() == 4 {
+                let local_path = &args[2];
+                let remote_path = &args[3];
+                match push(local_path, remote_path) {
+                    Ok(_) => println!("Successfully pushed to remote"),
+                    Err(e) => println!("Error during push: {}", e),
+                }
+            } else {
+                println!("Correct usage: dvcs push <local_path> <remote_path>");
+            }
+        },
     }
 }
