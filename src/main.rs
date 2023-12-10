@@ -1,6 +1,7 @@
 use std::{path::PathBuf};
 use std::{io, fs};
 use std::io::Error;
+use std::path::{Path};
 
 use diff::diff::show_diff;
 use file_management::directory::Directory;
@@ -93,11 +94,22 @@ async fn main() {
         "errorhandling" => errorhandling::errorhandling::errorhandling(),
 
         "status" => {
-            match status::status() {
-                Ok(_) => println!("Successfully fetched git status"),
-                Err(e) => println!("Failed to fetch git status: {}", e),
+            match status::track_status(&path) {
+                Ok((tracked, untracked)) => {
+                    println!("Tracked files:");
+                    for file in tracked {
+                        println!("  - {}", file);
+                    }
+        
+                    println!("Untracked files:");
+                    for file in untracked {
+                        println!("  - {}", file);
+                    }
+                },
+                Err(e) => eprintln!("Error: {}", e),
             }
         },
+        
 
         "log" => {
             if let Err(e) = log::log() {

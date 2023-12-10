@@ -1,35 +1,35 @@
-use std::process::Command;
-use std::{path::PathBuf};
+use std::collections::HashSet;
+use std::fs::{self, File};
+use std::io::{self, Read};
+use std::path::Path;
 
-fn get_git_status() -> Result<String, String> {
-    let args: Vec<String> = std::env::args().collect();
-    let path = std::env::current_dir().unwrap_or(PathBuf::from("."));
-    let path_as_str = &path.as_os_str().to_string_lossy().to_string();
+pub fn track_status(repo_path: &Path) -> io::Result<(HashSet<String>, HashSet<String>)> {
+    let mut tracked_files = HashSet::new();
+    let mut untracked_files = HashSet::new();
 
-    let output = Command::new("git")
-        .arg("-C")
-        .arg(path_as_str)
-        .arg("status")
-        .output();
+    //Tracked file
+    let file_path = repo_path.join(".my-dvcs/.tracked_files");
+    if file_path.exists() {
+        let mut file = File::open(file_path)?;
+        let mut contents = String::new();
+        file.read_to_string(&mut contents)?;
+        tracked_files = contents.lines().map(|s| s.to_string()).collect();
+    }
 
-    match output {
-        Ok(output) => {
-            if output.status.success() {
-                Ok(String::from_utf8_lossy(&output.stdout).to_string())
-            } else {
-                Err(String::from_utf8_lossy(&output.stderr).to_string())
+    //Untracked file
+    if repo_path.exists() && repo_path.is_dir() {
+        for entry in fs::read_dir(repo_path)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.is_file() {
+                
+                let relative_path = path.strip_prefix(repo_path).unwrap().to_str().unwrap().to_string();
+                if !tracked_files.contains(&relative_path) {
+                    untracked_files.insert(relative_path);
+                }
             }
         }
-        Err(e) => Err(e.to_string()),
     }
-}
 
-pub fn status() -> Result<(), String> {
-    match get_git_status() {
-        Ok(status) => {
-            println!("Git Status:\n{}", status);
-            Ok(())
-        }
-        Err(e) => Err(e),
-    }
+    Ok((tracked_files, untracked_files))
 }
