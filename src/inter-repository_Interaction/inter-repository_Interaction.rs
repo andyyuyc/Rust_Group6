@@ -135,3 +135,113 @@ fn push(local_path: &str, remote_path: &str) -> io::Result<()> {
 
     Ok(())
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs::{self, File};
+    use std::io::Write;
+    use std::path::Path;
+    use tempfile::TempDir;
+
+    fn setup_test_environment() -> io::Result<(TempDir, TempDir)> {
+        let remote_dir = TempDir::new()?;
+        let local_dir = TempDir::new()?;
+        Ok((remote_dir, local_dir))
+    }
+
+    fn create_test_file(dir: &Path, file_name: &str, content: &[u8]) -> io::Result<()> {
+        let file_path = dir.join(file_name);
+        let mut file = File::create(file_path)?;
+        file.write_all(content)?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_pull_valid_paths() -> io::Result<()> {
+        let (remote_dir, local_dir) = setup_test_environment()?;
+        create_test_file(remote_dir.path(), "test.txt", b"Hello, world!")?;
+
+        let result = pull(remote_dir.path().to_str().unwrap(), local_dir.path().to_str().unwrap());
+        assert!(result.is_ok());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_pull_invalid_paths() {
+        let result = pull("non_existent_directory", "another_non_existent_directory");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_push_valid_paths() -> io::Result<()> {
+        let (local_dir, remote_dir) = setup_test_environment()?;
+        create_test_file(local_dir.path(), "test.txt", b"Hello, world!")?;
+
+        let result = push(local_dir.path().to_str().unwrap(), remote_dir.path().to_str().unwrap());
+        assert!(result.is_ok());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_push_invalid_paths() {
+        let result = push("non_existent_directory", "another_non_existent_directory");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_detect_no_changes() {
+        let content = b"Hello, world!\nThis is a test.";
+        let source_lines = content.split(|&b| b == b'\n').map(Vec::from).collect::<Vec<_>>();
+        let dest_lines = source_lines.clone();
+
+        let changes_detected = detect_changes(&source_lines, &dest_lines, true);
+        assert!(!changes_detected);
+    }
+
+    #[test]
+    fn test_detect_changes() {
+        let source_content = b"Hello, world!\nThis is a test.";
+        let dest_content = b"Hello, world!\nThis is a modified test.";
+        let source_lines = source_content.split(|&b| b == b'\n').map(Vec::from).collect::<Vec<_>>();
+        let dest_lines = dest_content.split(|&b| b == b'\n').map(Vec::from).collect::<Vec<_>>();
+
+        let changes_detected = detect_changes(&source_lines, &dest_lines, true);
+        assert!(changes_detected);
+    }
+
+    #[test]
+    fn test_synchronize_no_conflict() -> io::Result<()> {
+        let (source_dir, dest_dir) = setup_test_environment()?;
+        let file_name = "test.txt";
+        let source_file_path = source_dir.path().join(file_name);
+        let dest_file_path = dest_dir.path().join(file_name);
+
+        File::create(&source_file_path)?.write_all(b"Test content")?;
+        File::create(&dest_file_path)?.write_all(b"Test content")?;
+
+        let conflict = synchronize_changes(source_file_path.to_str().unwrap(), dest_file_path.to_str().unwrap(), true)?;
+        assert!(!conflict);
+        
+        Ok(())
+    }
+
+    #[test]
+    fn test_synchronize_conflict() -> io::Result<()> {
+        let (source_dir, dest_dir) = setup_test_environment()?;
+        let file_name = "test.txt";
+        let source_file_path = source_dir.path().join(file_name);
+        let dest_file_path = dest_dir.path().join(file_name);
+
+        File::create(&source_file_path)?.write_all(b"Original content")?;
+        File::create(&dest_file_path)?.write_all(b"Modified content")?;
+
+        let conflict = synchronize_changes(source_file_path.to_str().unwrap(), dest_file_path.to_str().unwrap(), true)?;
+        assert!(conflict);
+
+        Ok(())
+    }
+}
