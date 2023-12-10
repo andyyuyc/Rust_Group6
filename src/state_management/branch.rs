@@ -34,7 +34,7 @@ pub fn get_branches_cmd() -> std::io::Result<String> {
 
     // Retrieve current branch (head)
     let curr_head = repo.get_current_head()
-        .map(|head| format!("Current branch: {}", head))
+        .map(|head| format!("\n*curr: {}", head))
         .ok_or(Error::new(io::ErrorKind::Other, "Failed to retrieve current head"))?;
     branches.push_str(&curr_head);
 
