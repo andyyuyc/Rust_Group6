@@ -160,7 +160,7 @@ async fn main() {
         },
         "cat" => {
             if args.len() == 3 {
-                match cat(&path) {
+                match cat(&PathBuf::from(&args[2])) {
                     Ok(content) => println!("{}", content),
                     Err(_) => println!("Error: Failed to read file"),
                 };
