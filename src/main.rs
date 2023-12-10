@@ -106,7 +106,20 @@ async fn main() {
         },
         "status" => {
             if args.len() == 2 {
-                println!("To be implemented");
+                match status::track_status(&path) {
+                    Ok((tracked, untracked)) => {
+                        println!("Tracked files:");
+                        for file in tracked {
+                            println!("  - {}", file);
+                        }
+            
+                        println!("Untracked files:");
+                        for file in untracked {
+                            println!("  - {}", file);
+                        }
+                    },
+                    Err(e) => println!("Error: {}", e),
+                }
             } else {
                 println!("Correct Usage: dvcs status")
             }
