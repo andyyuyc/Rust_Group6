@@ -84,6 +84,7 @@ async fn main() {
     }
 
     match args[1].as_str() {
+        "init" => {},
         "clone" => {
             if args.len() == 3 {
                 match clone_local(&path_as_str, &args[2]) {

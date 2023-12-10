@@ -11,12 +11,6 @@ use crate::interface::io::RepositoryInterface;
 
 pub fn init_repo(path: &str) -> IoResult<()> {
     let repo_path = Path::new(path);
-
-    // Proceed with the repository initialization
-    let status = Command::new("git")
-        .arg("init")
-        .arg(path)
-        .status()?;
     
     // Create the home directory .my-dvcs
     let dvcs_path = repo_path.join(".my-dvcs");
@@ -32,11 +26,7 @@ pub fn init_repo(path: &str) -> IoResult<()> {
     let head_path = dvcs_path.join("head");
     fs::write(head_path, default_branch)?;
 
-    if status.success() {
-        Ok(())
-    } else {
-        Err(io::Error::new(io::ErrorKind::Other, "Failed to initialize repository"))
-    }
+    Ok(())
 }
 
 /// Getting input from the user

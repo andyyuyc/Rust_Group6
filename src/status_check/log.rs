@@ -30,7 +30,7 @@ pub fn dvcs_log(commit: &Commit) -> std::io::Result<()> {
     writeln!(file, "{}\n", commit)?;
 
     // Write the original content after the new commit
-    write!(file, "{}", existing_content)?;
+    writeln!(file, "{}", existing_content)?;
 
     Ok(())
 }

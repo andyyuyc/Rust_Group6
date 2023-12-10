@@ -232,7 +232,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "dvcs-experimental"
+name = "dvcs"
 version = "0.1.0"
 dependencies = [
  "chrono",
