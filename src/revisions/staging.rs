@@ -2,6 +2,7 @@ use std::fs::{self, File};
 use std::io::{self, Write, Read, stdin, stdout};
 use std::path::{Path, PathBuf};
 use std::collections::HashSet;
+use walkdir::{WalkDir, DirEntry};
 
 // Adds a file to the staging area
 pub fn stage_add(repository_path: &str, file_path: &str) -> io::Result<()> {
@@ -92,24 +93,37 @@ fn validate_repository_path(repo_path: &Path) -> io::Result<()> {
     Ok(())
 }
 
+/// Recursively adds all files 
 pub fn stage_all_files(repo_path: &Path) -> io::Result<()> {
-    let entries = std::fs::read_dir(repo_path)?;
-
-    for entry in entries {
-        let entry = entry?;
+    for entry in WalkDir::new(repo_path)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| !is_excluded(e)) 
+    {
         let path = entry.path();
 
-        // Getting the relative path
-        if let Ok(relative_path) = path.strip_prefix(repo_path) {
-            stage_add(
-                &repo_path.display().to_string(), 
-                &relative_path.display().to_string()
-            )?;
-        } else {
-            // Handle the case where strip_prefix fails
-            return Err(std::io::Error::new(io::ErrorKind::Other, "Failed to strip prefix from path during staging"));
+        // Check if it's a file
+        if path.is_file() {
+            // Getting the relative path
+            if let Ok(relative_path) = path.strip_prefix(repo_path) {
+                stage_add(
+                    &repo_path.display().to_string(), 
+                    &relative_path.display().to_string()
+                )?;
+            } else {
+                // Handle the case where strip_prefix fails
+                return Err(std::io::Error::new(io::ErrorKind::Other, "Failed to strip prefix from path during staging"));
+            }
         }
     }
 
     Ok(())
+}
+
+// Excludes .my-dvcs from being added to the staging area
+fn is_excluded(entry: &DirEntry) -> bool {
+    entry.file_name()
+        .to_str()
+        .map(|s| s.starts_with(".my-dvcs"))
+        .unwrap_or(false)
 }
