@@ -196,7 +196,7 @@ pub fn merge_cmd(other_branch: &str) -> std::io::Result<()> {
         .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to update branch head to merge commit"))?;
 
     // // Update the repo head NOT NECESSARY SINCE THE HEAD DOES NOT CHANGE
-    // repo.update_current_head(commit.get_hash());
+    // repo.update_current_head(&branch);
 
     Ok(())
 }

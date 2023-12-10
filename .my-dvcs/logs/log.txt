@@ -1,16 +1,6 @@
 Commit:
-hash: 409d8304cdc1e85782b1b8a345ad0be555f2d840a9defbddcffab5abea2395ba
+hash: 15d64e42a92fd4b8892b3ed52f439c011ebc27d1521f28aa7710d1778a5d7ceb
 author: You
-message: Initial commit
-time: 2023-12-10 07:05:15.987
-Commit:
-hash: 78a83507a291553b0d6035c2de621307fdce4c8fc3b2bedf50f40ddb202d5696
-author: You
-message: Added cargo.toml
-time: 2023-12-10 07:13:06.121
-Commit:
-hash: e66d038435623a65adc0df9b56cf2955ee7c053ddb13bc378fbbee382795ca25
-author: You
-message: Added cargo.lock
-time: 2023-12-10 08:00:12.096 
+message: Added test.txt and idk/test.txt
+time: 2023-12-10 21:07:06.739 
 
