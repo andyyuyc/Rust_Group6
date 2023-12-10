@@ -30,7 +30,12 @@ pub fn get_branches_cmd() -> std::io::Result<String> {
         .ok_or(Error::new(io::ErrorKind::Other, "Failed to retrieve branches. There may be none"))
         .and_then(|vec| {
             Ok(vec.join("\n"))
-        });
+        })?;
 
-    branches
+    // Retrieve current branch (head)
+    let curr_head = repo.get_current_head()
+        .map(|head| format!("Current branch: {}", head))
+        .ok_or(Error::new(io::ErrorKind::Other, "Failed to retrieve current head"));
+
+    curr_head
 }
