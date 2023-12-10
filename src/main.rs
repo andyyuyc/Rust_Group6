@@ -1,8 +1,11 @@
-use std::path::PathBuf;
-use std::io;
+use std::{path::PathBuf};
+use std::{io, fs};
 use std::io::Error;
 
-use file_management::commit::{Commit, self, commit_cmd};
+use diff::diff::show_diff;
+use file_management::directory::Directory;
+use file_management::hash::Hash;
+use file_management::{commit::{Commit, self, commit_cmd}, directory::BlobRef};
 use initialization::{init::init, clone::clone_local};
 use interface::io::RepositoryInterface;
 use revisions::{staging::{stage_add, stage_all_files}, status};
@@ -31,6 +34,28 @@ use tokio::runtime;
 // mod errorhandling;
 
 // pub fn main() {}
+
+//this 
+fn directory_path(path: &PathBuf) -> Directory {
+    let mut directory = Directory::new();
+
+    // Iterate over files in the directory
+    if let Ok(dir_entries) = fs::read_dir(path) {
+        for entry in dir_entries.filter_map(|e| e.ok()) {
+            let file_path = entry.path();
+
+            //checks for whether path is file or directory
+            if file_path.is_file() {
+                let file_hash = Hash::new(&file_path.to_string_lossy());
+                let blob_ref = BlobRef::new(file_hash);
+
+                directory.insert_file_ref(&file_path, blob_ref);
+            }
+        }
+    }
+
+    directory
+}
 
 #[tokio::main]
 async fn main() {
@@ -133,6 +158,19 @@ async fn main() {
                 println!("Correct usage: dvcs cat <file_path>")
             }
         },
+        "diff" => {
+            if args.len() >= 4 {
+                let dir1_path = PathBuf::from(&args[2]);
+                let dir2_path = PathBuf::from(&args[3]);
+
+                let dir1 = directory_path(&dir1_path);
+                let dir2 = directory_path(&dir2_path);
+
+                show_diff(&dir1, &dir2);
+            } else {    
+                println!("Correct usage: dvcs diff")
+            }
+        }
         _ => println!("Unknown command"),
     }
 }
