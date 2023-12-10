@@ -1,5 +1,5 @@
 use std::{io::{self, Write, Error}, fs::File, path::PathBuf};
-use crate::file_management::{hash::Hash, commit::{self, commit}};
+use crate::file_management::{commit::{self, commit}};
 
 use crate::{interface::io::RepositoryInterface, file_management::{commit::Commit, hash::DVCSHash, directory::Directory}};
 
@@ -32,6 +32,23 @@ pub fn checkout(file_system: RepositoryInterface, commit: Commit) -> io::Result<
         })?;
 
     Ok(())
+}
+
+pub fn checkout_cmd(branch_name: &str) -> std::io::Result<()> {
+    // Initialize repository
+    let curr_path = std::env::current_dir()?;
+    let repo = RepositoryInterface::new(&curr_path)
+        .ok_or(Error::new(io::ErrorKind::Other, "Directory is not a repo"))?;
+
+    // Get the head commit for the branch
+    let branch_hash = repo.get_hash_from_branch(branch_name)
+        .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to retrieve branch. Branch does not exist"))?;
+    let commit = repo.get_serialized_object(branch_hash)
+        .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to retrieve commit for checkout"))?;
+
+    // Checkout to the head commit
+    checkout(repo, commit)
+        .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to check out files"))
 }
 
 

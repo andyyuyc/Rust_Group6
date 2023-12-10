@@ -1,7 +1,7 @@
-use crate::{file_management::{hash::{Hash, DVCSHash}, directory::{Directory, BlobRef}, commit::Commit}, interface::io::RepositoryInterface};
-use std::{io, collections::{HashMap, HashSet, VecDeque}};
+use crate::{file_management::{hash::{Hash, DVCSHash}, directory::{Directory, BlobRef}, commit::{Commit, self}}, interface::io::RepositoryInterface};
+use std::{io::{self, Error}, collections::{HashSet, VecDeque}};
 
-pub fn merge(file_system: RepositoryInterface, commit1: Commit, commit2: Commit) -> io::Result<Directory> { 
+pub fn merge(file_system: &RepositoryInterface, commit1: Commit, commit2: Commit) -> io::Result<Directory> { 
     // Find a common ancestor
     let parent_commit = get_common_ancestor(&file_system, &commit1, &commit2)?;
 
@@ -151,4 +151,45 @@ fn get_common_ancestor(file_system: &RepositoryInterface, commit1: &Commit, comm
     }
 
     Err(io::Error::new(io::ErrorKind::NotFound, "No common ancestor found"))
+}
+
+pub fn merge_cmd(other_branch: &str) -> std::io::Result<()> {
+    // Initialize repository
+    let curr_path = std::env::current_dir()?;
+    let repo = RepositoryInterface::new(&curr_path)
+        .ok_or(Error::new(io::ErrorKind::Other, "Directory is not a repo"))?;
+
+    // Get the branch you are merging into
+    let merge_into_hash = repo.get_current_head()
+        .ok_or(Error::new(io::ErrorKind::Other, "Failed to retrieve current head"))?;
+    let merge_into = repo.get_serialized_object(merge_into_hash.clone())
+        .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to retrieve target branch"))?;
+
+    // Get the other branch
+    let merge_from_hash = repo.get_hash_from_branch(other_branch)
+        .map_err(|_| Error::new(io::ErrorKind::Other, "Other branch does not exist"))?;
+    let merge_from = repo.get_serialized_object(merge_from_hash)
+        .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to retrieve target branch"))?;
+
+    // Merge directories
+    let merged_dir = merge(&repo, merge_into, merge_from)?;
+
+    // Merge commit
+    let commit = commit::commit (
+        "DVCS MERGE",
+        &vec![merge_into_hash.clone()],
+        merged_dir,
+        "Merge Commit",
+        &repo
+    )?;
+
+    // Update branch head 
+    let branch = repo.get_branch_from_hash(merge_into_hash.clone())
+        .ok_or(Error::new(io::ErrorKind::Other, "Failed to update branch head to merge commit"))?;
+    repo.update_branch_head(&branch, merge_into_hash);
+
+    // Update the repo head
+    repo.update_current_head(commit.get_hash());
+
+    Ok(())
 }

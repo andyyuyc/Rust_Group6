@@ -23,7 +23,6 @@ impl RepositoryInterface {
     /// Returns true if the specified directory contains a repo
     pub fn is_repo(dir_path: &PathBuf) -> bool {
         if dir_path.is_dir() {
-            println!("Is a directory");
             if let Ok(entries) = std::fs::read_dir(dir_path) {
                 return entries.into_iter()
                     .filter_map(|entry| entry.ok())
@@ -63,7 +62,6 @@ impl RepositoryInterface {
             // Create directory for prefix if nonexistant
             let parent_path = path.parent()
                 .ok_or(io::Error::new(io::ErrorKind::Other, "Invalid Path"))?;
-            println!("Creating directory for {}", &parent_path.display());
             std::fs::create_dir_all(parent_path)?;
 
             // Create the new object file
@@ -97,11 +95,8 @@ impl RepositoryInterface {
     {
         // Serialize the object and write it to the file with the hash
         let hash = obj.get_hash();
-        println!("created hash");
         let serialized_data = serde_json::to_string(obj)?;
-        println!("serialized data");
         self.add_object(hash, serialized_data.as_bytes())?;
-        println!("added object");
 
         Ok(())
     }
@@ -182,6 +177,7 @@ impl RepositoryInterface {
         if branch_path.exists() {
             let mut file = File::create(branch_path)?;
             file.write_all(new_hash.as_string().as_bytes());
+            return Ok(())
         }
 
         // Otherwise, return an Err
@@ -219,6 +215,27 @@ impl RepositoryInterface {
         None
     } 
 
+    /// Retrieves the names for all of the branches. Fails if
+    /// there are no branches or there is an I/O error
+    pub fn get_branches(&self) -> Option<Vec<String>> {
+        let branches_dir = self.get_repo_path()
+            .join(".my-dvcs")
+            .join("branches");
+
+        let entries = std::fs::read_dir(branches_dir).ok()?;
+        let mut branch_names = Vec::new();
+    
+        // Go through every branch file and check if there is a hash match
+        for entry in entries {  
+            let entry = entry.ok()?;
+            let path = entry.path();
+
+            branch_names.push(path.display().to_string());            
+        }
+
+        Some(branch_names)
+    }
+
     /// Retrieves the hash for a given branch. Returns an Err if the branch does
     /// not exist
     pub fn get_hash_from_branch(&self, branch_name: &str) -> std::io::Result<Hash> {
@@ -233,6 +250,7 @@ impl RepositoryInterface {
     }
 
     /// Returns the current overall head (not the branch head)
+    /// If the head file is empty, returns None
     pub fn get_current_head(&self) -> Option<Hash> {
         let head_path = self.get_repo_path()
             .join(".my-dvcs")

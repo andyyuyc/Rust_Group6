@@ -1,7 +1,7 @@
-use std::{io::{self, Read}, path::{PathBuf, Path}, fs::{File, create_dir_all}, fmt::Display};
+use std::{io::{self, Read, Error}, path::{PathBuf, Path}, fs::{File, create_dir_all}, fmt::Display};
 
 use serde::{Serialize, Deserialize};
-use crate::{file_management::{hash::Hash, directory}, interface::io::RepositoryInterface};
+use crate::{file_management::{hash::Hash, directory}, interface::io::RepositoryInterface, revisions::staging::{get_staged_files, self, stage_add, clear_staged_files}};
 
 use super::{directory::{Directory, BlobRef}, hash::DVCSHash};
 
@@ -96,6 +96,69 @@ pub fn commit(
     Ok(commit)
 }
 
+pub fn commit_cmd(message: &str, author: &str) -> std::io::Result<Commit> {
+    // Initialize repository
+    let curr_path = std::env::current_dir()?; 
+    let repo = RepositoryInterface::new(&curr_path)
+        .ok_or(Error::new(io::ErrorKind::Other, "Directory is not a repo"))?;
+
+    // Retrieves changes from the staging area
+    let staged_files = get_staged_files(&curr_path)
+        .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to retrieve files from staging area"))?;
+
+    if staged_files.len() == 0 {
+        println!("Nothing in staged files");
+        return Err(Error::new(io::ErrorKind::Other, "Nothing in staged files"));
+    }
+
+    // Get parent hash
+    let mut parent_hash = Vec::new();
+    if let Some(head_commit_hash) = repo.get_current_head() {
+        parent_hash.push(head_commit_hash);
+    }
+
+    // Commit 
+    let dir = repo.create_dir_from_files(&staged_files)
+        .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to create a directory object"))?;
+
+    let new_commit = commit(
+        author,
+        &parent_hash,
+        dir,
+        message,
+        &repo
+    ).map_err(|_| Error::new(io::ErrorKind::Other, "Failed to save commit to repo"))?;
+
+    // In git, there are no branches until you commit. If there were no branches previously, commit makes
+    // it so you move to a branch called master
+
+    // Update the branch head 
+    let new_commit_hash = new_commit.get_hash();
+    match repo.get_current_head() {
+        Some(curr_head) => {
+            // Existence of current head means there is at least 1 branch
+            // Get the current branch and update the hash
+            // WHAT IF YOU CHECKOUT TO A NON HEAD - YOU GET NO BRANCH FROM IT
+            let branch_name = repo.get_branch_from_hash(curr_head)
+                .ok_or(Error::new(io::ErrorKind::Other, "On a non head commit."))?;
+            println!("Updating branch: {}", &branch_name);
+            repo.update_branch_head(&branch_name, new_commit_hash.clone())
+                .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to update current branch head"))?;
+        },
+        None => {
+            // No branch - create a branch called master
+            println!("No branch - creating master branch");
+            repo.create_branch("master", new_commit_hash.clone())
+                .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to create master branch."));
+        },
+    }
+
+    // Update the repo head
+    repo.update_current_head(new_commit_hash);
+
+    Ok(new_commit)
+}
+
 #[test]
 fn commit_test() {
     use crate::interface::io::RepositoryInterface;
@@ -116,3 +179,24 @@ fn commit_test() {
     let commit = commit("Justin", &vec![], dir, "Initial commit", &repo).unwrap();
 }
 
+#[test]
+fn commit_cmd_test() {
+    use crate::staging;
+
+    stage_add(".", "test.txt").unwrap();
+    stage_add(".", "idk/test.txt").unwrap();
+    println!("Added to staging area");
+
+    commit_cmd("Commit 2", "Juicetin").unwrap();
+
+    clear_staged_files(&PathBuf::from(".")).unwrap();
+}
+
+#[test]
+fn commit_empty_cmd_test() {
+    use crate::staging;
+
+    commit_cmd("Empty Commit", "Juicetin").unwrap();
+
+    clear_staged_files(&PathBuf::from(".")).unwrap();
+}
