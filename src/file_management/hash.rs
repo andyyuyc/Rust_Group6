@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use sha256::digest;
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, Hash, Eq, PartialEq)]
 pub struct Hash(String);
 
 impl Hash {
@@ -9,8 +9,12 @@ impl Hash {
         Hash(digest(hash))
     }
 
-    pub fn from(vec: &Vec<u8>) -> Hash {
+    pub fn from(vec: &[u8]) -> Hash {
         Hash(digest(vec))
+    }
+
+    pub fn from_hashed(hash: &str) -> Hash {
+        Hash(String::from(hash))
     }
 
     pub fn as_string(&self) -> String {
