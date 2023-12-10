@@ -13,7 +13,8 @@ pub fn checkout(file_system: RepositoryInterface, commit: Commit) -> io::Result<
     file_system.update_current_head(&curr_branch);
 
     // Remove the files in the current directory
-    file_system.clear_directory();
+    file_system.clear_directory()
+        .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to clear directory for staging"))?;
 
     // Get the directory to reconstruct from and then reconstruct the files
     let directory: Directory = file_system.get_serialized_object(commit.get_dir_hash())?;

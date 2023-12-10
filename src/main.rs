@@ -2,6 +2,10 @@ use std::{path::PathBuf};
 use std::{io, fs};
 use std::io::Error;
 
+use errorhandling::error_handling::errorhandling;
+use inter_repo_interactions::pull_push::{pull, push};
+use revisions::staging::{stage_remove, clear_staged_files};
+use state_management::checkout::checkout_cmd;
 use status_check::log::{dvcs_log, log};
 use tracking::diff::show_diff;
 use file_management::directory::Directory;
@@ -24,6 +28,8 @@ pub mod revisions;
 pub mod view;
 pub mod initialization;
 pub mod status_check;
+pub mod errorhandling;
+pub mod inter_repo_interactions;
 
 
 use std::io::{Write, stdin, stdout, ErrorKind};
@@ -95,12 +101,26 @@ async fn main() {
                 println!("Correct Usage: dvcs clone <other-dir>")
             }
         },
-        // "errorhandling" => errorhandling::errorhandling(),
-        "status" => {
-            if let Err(e) = status::status().await {
-                println!("Error: {}", e);
-            } 
+        "errorhandling" => {
+            errorhandling::error_handling::errorhandling();
         },
+        "status" => {
+            if args.len() == 2 {
+                println!("To be implemented");
+            } else {
+                println!("Correct Usage: dvcs status")
+            }
+        },
+        "checkout" => {
+            if args.len() == 3 {
+                match checkout_cmd(&args[2]) {
+                    Ok(_) => println!("Successfully checked out {}", &args[2]),
+                    Err(e) => println!("Error: {}", e),
+                }
+            } else {
+                println!("Correct Usage: dvcs checkout <branch-name>")
+            }
+        }
         "commit" => {
             if args.len() == 3 {
                 let msg = &args[2];
@@ -166,6 +186,22 @@ async fn main() {
                 println!("Correct usage: dvcs add <file_path> | dvcs add *")
             }
         },
+        "remove" => {
+            match args[2].as_str() {
+                "*" => {
+                    match clear_staged_files(&path) {
+                        Ok(_) => println!("Successfully removed all files from staging area"),
+                        Err(_) => println!("Error: Failed to clear staging area"),
+                    }
+                },
+                path => {
+                    match stage_remove(&path_as_str, path) {
+                        Ok(_) => {},
+                        Err(e) => println!("Error: {}", e)
+                    }
+                }
+            }
+        },
         "cat" => {
             if args.len() == 4 {
                 let hash = Hash::from_hashed(&args[2]);
@@ -199,7 +235,29 @@ async fn main() {
             } else {
                 println!("Correct usage: dvcs log")
             }
-        }
+        },
+        "pull" => {
+            if args.len() == 3 {
+                let remote_path = &args[2];
+                match pull(remote_path, &path_as_str) {
+                    Ok(_) => println!("Successfully pulled from remote"),
+                    Err(e) => println!("Error during pull: {}", e),
+                }
+            } else {
+                println!("Correct usage: dvcs pull <remote_path>");
+            }
+        },
+        "push" => {
+            if args.len() == 3 {
+                let remote_path = &args[2];
+                match push(&path_as_str, remote_path) {
+                    Ok(_) => println!("Successfully pushed to remote"),
+                    Err(e) => println!("Error during push: {}", e),
+                }
+            } else {
+                println!("Correct usage: dvcs push <remote_path>");
+            }
+        },
         _ => println!("Unknown command"),
     }
 }
