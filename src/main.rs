@@ -152,19 +152,9 @@ async fn main() {
         },
         "remove" => {
             if args.len() == 3 {
-                match args[2].as_str() {
-                    "*" => {
-                        match stage_all_files(&path) {
-                            Ok(_) => println!("Successfully removed files"),
-                            Err(e) => println!("Erro: {}", e),
-                        }
-                    },
-                    path => {
-                        match stage_remove(&path_as_str, path) {
-                            Ok(_) => {},
-                            Err(e) => println!("Error: {}", e)
-                        }
-                    }
+                match stage_remove(&path_as_str, path) {
+                    Ok(_) => {},
+                    Err(e) => println!("Error: {}", e)
                 }
             } else {
                 println!("Correct usage: dvcs remove <file_path> | dvcs remove *")
