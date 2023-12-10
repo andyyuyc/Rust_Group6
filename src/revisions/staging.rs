@@ -17,7 +17,7 @@ pub fn stage_add(repository_path: &str, file_path: &str) -> io::Result<()> {
     // Invalid input if it is a directory or is a file_to_track
     if file_to_track.is_dir() {
         return Err(io::Error::new(io::ErrorKind::InvalidInput, "Cannot add directories to staging area"));
-    } else if file_to_track.starts_with(".my-dvcs") {
+    } else if file_path.starts_with(".my-dvcs") {
         return Err(io::Error::new(io::ErrorKind::InvalidInput, "Cannot add dvcs files to staging area"));
     }
 
