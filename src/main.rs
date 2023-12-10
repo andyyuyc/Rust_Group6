@@ -8,9 +8,10 @@ use file_management::hash::Hash;
 use file_management::{commit::{Commit, self, commit_cmd}, directory::BlobRef};
 use initialization::{init::init, clone::clone_local};
 use interface::io::RepositoryInterface;
-use revisions::{staging::{stage_add, stage_all_files}, status};
+use revisions::{staging::{stage_add, stage_remove, stage_all_files}, status};
 use state_management::{merge::{merge, merge_cmd}, branch::{get_branches_cmd, create_branch_cmd}};
 use view::cat::cat;
+use inter_repo_interaction::{pull_push::{pull, push}};
 
 use crate::{file_management::{commit::commit, hash::DVCSHash}, state_management::checkout::checkout};
 use crate::revisions::staging;
@@ -22,7 +23,7 @@ pub mod diff;
 pub mod revisions;
 pub mod view;
 pub mod initialization;
-pub mod inter-repo interaction
+pub mod inter_repo_interaction;
 
 
 use std::io::{Write, stdin, stdout, ErrorKind};
