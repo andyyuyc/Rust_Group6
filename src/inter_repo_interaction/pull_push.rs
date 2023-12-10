@@ -4,29 +4,6 @@ use std::path::Path;
 use std::collections::HashSet;
 
 
-fn main() {
-    println!("pull/push");
-    let mut action = String::new();
-    stdin().read_line(&mut action).expect("Failed to read line");
-
-    match action.trim() {
-        "pull" => {
-            let (remote_path, local_path) = get_paths("pull");
-            if let Err(e) = pull(&remote_path, &local_path) {
-                println!("Error during pull: {}", e);
-            }
-        },
-        "push" => {
-            let (local_path, remote_path) = get_paths("push");
-            if let Err(e) = push(&local_path, &remote_path) {
-                println!("Error during push: {}", e);
-            }
-        },
-        _ => println!("Invalid action. Please enter 'pull' or 'push'."),
-    }
-}
-
-
 fn get_paths(action: &str) -> (String, String) {
     let mut first_path = String::new();
     let mut second_path = String::new();
