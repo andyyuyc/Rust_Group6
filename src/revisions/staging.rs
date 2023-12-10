@@ -18,7 +18,7 @@ pub fn stage_add(repository_path: &str, file_path: &str) -> io::Result<()> {
     if file_to_track.is_dir() {
         return Err(io::Error::new(io::ErrorKind::InvalidInput, "Cannot add directories to staging area"));
     } else if file_to_track.starts_with(".my-dvcs") {
-        return Err(io::Error::new(io::ErrorKind::InvalidInput, "Cannot add .dvcs files to staging area"));
+        return Err(io::Error::new(io::ErrorKind::InvalidInput, "Cannot add dvcs files to staging area"));
     }
 
     let mut tracked_files = read_files(&repo_path)?;
@@ -112,10 +112,14 @@ pub fn stage_all_files(repo_path: &Path) -> io::Result<()> {
         if path.is_file() {
             // Getting the relative path
             if let Ok(relative_path) = path.strip_prefix(repo_path) {
-                stage_add(
+                if let Err(e) = stage_add(
                     &repo_path.display().to_string(), 
                     &relative_path.display().to_string()
-                )?;
+                ) {
+                    if e.kind() != io::ErrorKind::InvalidInput {
+                        return Err(e);
+                    }
+                }
             } else {
                 // Handle the case where strip_prefix fails
                 return Err(std::io::Error::new(io::ErrorKind::Other, "Failed to strip prefix from path during staging"));

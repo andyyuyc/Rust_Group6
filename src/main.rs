@@ -230,7 +230,7 @@ async fn main() {
             if args.len() == 2 {
                 match log() {
                     Ok(_) => {},
-                    Err(_) => println!("Failed to print log"),
+                    Err(_) => println!("Failed to print log. Commit to see logs"),
                 }
             } else {
                 println!("Correct usage: dvcs log")
