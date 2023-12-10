@@ -22,6 +22,7 @@ pub mod diff;
 pub mod revisions;
 pub mod view;
 pub mod initialization;
+pub mod inter-repo interaction
 
 
 use std::io::{Write, stdin, stdout, ErrorKind};
