@@ -1,65 +1,27 @@
-use std::fs;
-use std::path::{Path, PathBuf};
-use std::collections::HashSet;
-use std::io::{self, BufRead};
+use crate::file_management::directory::Directory;
 
-pub fn show_diff(current_dir: &str, previous_dir: &str) -> io::Result<()> {
-    let current_files = read_dir_files(current_dir, current_dir)?;
-    let previous_files = read_dir_files(previous_dir, previous_dir)?;
-
-    let current_set: HashSet<_> = current_files.into_iter().collect();
-    let previous_set: HashSet<_> = previous_files.into_iter().collect();
-
-    for file in current_set.difference(&previous_set) {
-        println!("Added: {}", file.display());
-    }
-
-    for file in previous_set.difference(&current_set) {
-        println!("Removed: {}", file.display());
-    }
-
-    // Compare file contents for files existing in both directories
-    for file in current_set.intersection(&previous_set) {
-        compare_file_contents(&format!("{}/{}", current_dir, file.display()), &format!("{}/{}", previous_dir, file.display()))?;
-    }
-
-    Ok(())
-}
-
-fn read_dir_files<'a>(dir_path: &str, root: &str) -> io::Result<HashSet<PathBuf>> {
-    let mut files = HashSet::new();
-    for entry in fs::read_dir(Path::new(dir_path))? {
-        let entry = entry?;
-        let path = entry.path();
-
-        if path.is_dir() {
-            let subdir_files = read_dir_files(path.to_str().unwrap(), root)?;
-            for file in subdir_files {
-                files.insert(file);
-            }
-        } else {
-            let relative_path = path.strip_prefix(Path::new(root)).unwrap().to_path_buf();
-            files.insert(relative_path);
-        }
-    }
-    Ok(files)
-}
-
-fn compare_file_contents(current_file_path: &str, previous_file_path: &str) -> io::Result<()> {
-    let current_file = fs::File::open(current_file_path)?;
-    let previous_file = fs::File::open(previous_file_path)?;
-
-    let current_lines: Vec<_> = io::BufReader::new(current_file).lines().collect::<Result<_, _>>()?;
-    let previous_lines: Vec<_> = io::BufReader::new(previous_file).lines().collect::<Result<_, _>>()?;
-
-    // Simple line-by-line comparison
-    for (i, (current_line, previous_line)) in current_lines.iter().zip(previous_lines.iter()).enumerate() {
-        if current_line != previous_line {
-            println!("{}: - {}", i + 1, previous_line);
-            println!("{}: + {}", i + 1, current_line);
+pub fn show_diff(dir1: &Directory, dir2: &Directory) {
+    //comparing file paths hashes in dir1 against dir2
+    for (path, blob_ref) in dir1.get_key_value_pairs() {
+        match dir2.get_file_ref(&path) {
+            Some(blob_ref2) => {
+                //logic to compare the hashes/names of the paths
+                if blob_ref.get_content_hash() != blob_ref2.get_content_hash() {
+                    println!("Modified: {}", path.to_string_lossy());
+                }
+            },
+            None => {
+            //displays files that are in dir 1 but not in dir2
+                println!("--- dir_1{} ", path.to_string_lossy());
+            },
         }
     }
 
-    Ok(())
+    //checks for files that are in dir2 but not in dir1
+    for (path, _) in dir2.get_key_value_pairs() {
+        if dir1.get_file_ref(&path).is_none() {
+            println!("Files ");
+            println!("+++ dir_2{}", path.to_string_lossy());
+        }
+    }
 }
-
