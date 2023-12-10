@@ -33,6 +33,21 @@ fn detect_changes(source_lines: &[Vec<u8>], dest_lines: &[Vec<u8>], is_pull_oper
 }
 
 
+fn resolve_conflict(is_pull_operation: bool) -> String {
+    let operation = if is_pull_operation { "pull" } else { "push" };
+    println!("Conflict detected. Do you want to force {}? (yes/no):", operation);
+    let mut choice = String::new();
+    stdin().read_line(&mut choice).expect("Failed to read choice");
+    let choice = choice.trim().to_lowercase();
+
+    if choice == "yes" {
+        "force".to_string()
+    } else {
+        "ignore".to_string()
+    }
+}
+
+
 fn synchronize_changes(source_path: &str, dest_path: &str, is_pull_operation: bool) -> io::Result<bool> {
     let mut source_file = File::open(source_path)?;
     let mut dest_file = File::open(dest_path)?;
@@ -45,10 +60,12 @@ fn synchronize_changes(source_path: &str, dest_path: &str, is_pull_operation: bo
     let source_lines: Vec<Vec<u8>> = source_contents.split(|&b| b == b'\n').map(Vec::from).collect();
     let dest_lines: Vec<Vec<u8>> = dest_contents.split(|&b| b == b'\n').map(Vec::from).collect();
 
-    let conflict = detect_changes(&source_lines, &dest_lines, is_pull_operation);
-
-    if conflict {
-        println!("Merge conflict detected. Manual resolution required.");
+    if detect_changes(&source_lines, &dest_lines, is_pull_operation) {
+        let action = resolve_conflict(is_pull_operation);
+        if action == "force" {
+            let data_to_write = if is_pull_operation { &source_contents } else { &dest_contents };
+            File::create(dest_path)?.write_all(data_to_write)?;
+        }
         Ok(true)
     } else {
         let data_to_write = if is_pull_operation { &source_contents } else { &dest_contents };
@@ -58,7 +75,7 @@ fn synchronize_changes(source_path: &str, dest_path: &str, is_pull_operation: bo
 }
 
 
-pub fn pull(remote_path: &str, local_path: &str) -> io::Result<()> {
+fn pull(remote_path: &str, local_path: &str) -> io::Result<()> {
     let remote_files = fs::read_dir(remote_path)?;
     let mut conflict_occurred = false;
 
@@ -80,13 +97,16 @@ pub fn pull(remote_path: &str, local_path: &str) -> io::Result<()> {
 
     if !conflict_occurred {
         println!("Pull completed.");
+    } else {
+        println!("Pull completed.");
     }
+
 
     Ok(())
 }
 
 
-pub fn push(local_path: &str, remote_path: &str) -> io::Result<()> {
+fn push(local_path: &str, remote_path: &str) -> io::Result<()> {
     let local_files = fs::read_dir(local_path)?;
     let mut conflict_occurred = false;
 
@@ -108,9 +128,10 @@ pub fn push(local_path: &str, remote_path: &str) -> io::Result<()> {
 
     if !conflict_occurred {
         println!("Push completed.");
+    } else {
+        println!("Push completed.");
     }
 
     Ok(())
 }
-
 
