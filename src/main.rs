@@ -70,18 +70,25 @@ async fn main() {
         return;
     }
 
+    if args[1].as_str() == "init" {
+        match initialization::init::init_repo(&path_as_str) {
+            Ok(_) => println!("Successfully initialized repo"),
+            Err(_) => println!("Failed to initialize repo"),
+        };
+    }
+
+    // Fixes the case where the methods are called without a repo
+    if RepositoryInterface::new(&path).is_none() {
+        println!("Not a repo. Do dvcs init to initialize");
+        return;
+    }
+
     match args[1].as_str() {
-        "init" => {
-            match initialization::init::init_repo(&path_as_str) {
-                Ok(_) => println!("Successfully initialized repo"),
-                Err(_) => println!("Failed to initialize repo"),
-            };
-        },
         "clone" => {
             if args.len() == 3 {
                 match clone_local(&path_as_str, &args[2]) {
                     Ok(_) => println!("Successfully clone to local"),
-                    Err(_) => println!("Failed to clone"),
+                    Err(_) => println!("Failed to clone. Might lack permissions"),
                 }
             } else {
                 println!("Correct Usage: dvcs clone <other-dir>")
