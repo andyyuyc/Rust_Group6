@@ -48,3 +48,19 @@ pub fn log() -> io::Result<()> {
 
     Ok(())
 }
+
+
+
+#[cfg(test)]
+mod log_tests {
+    use super::*;
+
+    #[test]
+    fn test_log_with_no_file() {
+        // Make sure the log.txt file does not exist
+        assert!(log().is_err());
+    }
+
+    
+}
+

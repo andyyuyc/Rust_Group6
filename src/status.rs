@@ -69,7 +69,7 @@ async fn get_github_commits(repo_url: &str) -> Result<String, Box<dyn std::error
     Ok(commits_info)
 }
 
-#[tokio::main]
+
 pub async fn status() -> Result<(), Box<dyn std::error::Error>> {
     println!("Select the operation:");
     println!("1. Get GitHub commit history");
@@ -133,4 +133,36 @@ pub async fn status() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
+}
+
+
+
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_git_status_invalid() {
+        let path = "invalid_path"; // Test for an invalid path
+        let result = git_status(path);
+        assert!(result.is_err());
+    }
+
+
+    #[test]
+    fn test_git_log_invalid() {
+        let path = "invalid_path"; // Test for an invalid path
+        let result = git_log(path);
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_get_github_commits_valid() {
+        let repo_url = "https://github.com/andyyuyc/Jersey";  // Replace the GitHub repository URL with a valid one.
+        let result = get_github_commits(repo_url).await;
+        assert!(result.is_ok());
+    }
+
 }
