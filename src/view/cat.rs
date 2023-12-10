@@ -1,16 +1,9 @@
-use std::{path::PathBuf, fs::{File, read_to_string}, io::{self, Error, Write}};
+use std::{path::PathBuf, io::{self, Error, Write}};
 use crate::{interface::io::RepositoryInterface, file_management::{commit::Commit, directory::Directory}};
 use crate::file_management::hash::Hash;
 
-// 8. Create cat <commit-hash> <file-name>
 
-// - Convert hash string to a hash
-// - Retrieve commit object
-// - Retrieve directory object using hash from commit object
-// - Retrieve blobref using file-name 
-// - get_object(hash from blobref) -> Vec<u8>
-// - convert this to a string and print it in terminal
-
+/// Inspect a file of a given revision
 pub fn cat_cmd(hash: Hash, file_name: &PathBuf) -> io::Result<()> {
     // Initialize repository
     let curr_path = std::env::current_dir()?;
