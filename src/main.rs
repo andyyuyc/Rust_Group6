@@ -2,7 +2,8 @@ use std::{path::PathBuf};
 use std::{io, fs};
 use std::io::Error;
 
-use diff::diff::show_diff;
+use status_check::log::{dvcs_log, log};
+use tracking::diff::show_diff;
 use file_management::directory::Directory;
 use file_management::hash::Hash;
 use file_management::{commit::{Commit, self, commit_cmd}, directory::BlobRef};
@@ -18,10 +19,11 @@ use crate::revisions::staging;
 pub mod file_management;
 pub mod interface;
 pub mod state_management;
-pub mod diff;
+pub mod tracking;
 pub mod revisions;
 pub mod view;
 pub mod initialization;
+pub mod status_check;
 
 
 use std::io::{Write, stdin, stdout, ErrorKind};
@@ -95,7 +97,10 @@ async fn main() {
             if args.len() == 3 {
                 let msg = &args[2];
                 match commit_cmd(&msg, "You") {
-                    Ok(commit) => todo!("Add a new file log"),
+                    Ok(commit) => match dvcs_log(&commit) {
+                        Ok(_) => {},
+                        Err(_) => println!("Failed to update log"),
+                    },
                     Err(e) => println!("Error: {}", e),
                 }
             } else {
@@ -134,7 +139,7 @@ async fn main() {
                     "*" => {
                         match stage_all_files(&path) {
                             Ok(_) => println!("Successfully staged all files"),
-                            Err(e) => println!("Erro: {}", e),
+                            Err(e) => println!("Error: {}", e),
                         }
                     },
                     path => {
@@ -169,6 +174,16 @@ async fn main() {
                 show_diff(&dir1, &dir2);
             } else {    
                 println!("Correct usage: dvcs diff")
+            }
+        },
+        "log" => {
+            if args.len() == 2 {
+                match log() {
+                    Ok(_) => {},
+                    Err(_) => println!("Failed to print log"),
+                }
+            } else {
+                println!("Correct usage: dvcs log")
             }
         }
         _ => println!("Unknown command"),
