@@ -11,7 +11,7 @@ use initialization::{init::init, clone::clone_local};
 use interface::io::RepositoryInterface;
 use revisions::{staging::{stage_add, stage_all_files}, status};
 use state_management::{merge::{merge, merge_cmd}, branch::{get_branches_cmd, create_branch_cmd}};
-use view::cat::cat;
+use view::cat::cat_cmd;
 
 use crate::{file_management::{commit::commit, hash::DVCSHash}, state_management::checkout::checkout};
 use crate::revisions::staging;
@@ -159,13 +159,14 @@ async fn main() {
             }
         },
         "cat" => {
-            if args.len() == 3 {
-                match cat(&PathBuf::from(&args[2])) {
-                    Ok(content) => println!("{}", content),
-                    Err(_) => println!("Error: Failed to read file"),
-                };
+            if args.len() == 4 {
+                let hash = Hash::from_hashed(&args[2]);
+                let file_name = PathBuf::from(&args[3]);
+                if let Err(e) = cat_cmd(hash, &file_name) {
+                    println!("Error: {}", e)
+                }
             } else {
-                println!("Correct usage: dvcs cat <file_path>")
+                println!("Correct usage: dvcs cat <commit-hash> <file-name>")
             }
         },
         "diff" => {
