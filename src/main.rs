@@ -108,19 +108,24 @@ async fn main() {
             }
         },
         "branch" => {
-            if args.len() == 2 {
-                match get_branches_cmd() {
-                    Ok(branch_info) => println!("{}", branch_info),
-                    Err(e) => println!("Error: {}", e),
-                }
-            } else if args.len() == 3 {
+            if args.len() == 3 {
                 let branch_name = &args[2];
                 match create_branch_cmd(&branch_name) {
                     Ok(_) => println!("Created branch {}", &branch_name),
                     Err(e) => println!("Error: {}", e),
                 }
             } else {
-                println!("Correct usage: dvcs branch | dvcs branch <branch_name>")
+                println!("Correct usage: dvcs branch <branch_name>")
+            }
+        },
+        "heads" => {
+            if args.len() == 2 {
+                match get_branches_cmd() {
+                    Ok(branch_info) => println!("{}", branch_info),
+                    Err(e) => println!("Error: {}", e),
+                }
+            } else {
+                println!("Correct usage: dvcs heads")
             }
         }
         "merge" => {
