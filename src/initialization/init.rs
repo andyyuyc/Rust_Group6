@@ -12,11 +12,6 @@ use crate::interface::io::RepositoryInterface;
 pub fn init_repo(path: &str) -> IoResult<()> {
     let repo_path = Path::new(path);
 
-    // Check if '.git' directory exists in the provided path
-    if repo_path.join(".git").exists() {
-        return Err(io::Error::new(io::ErrorKind::AlreadyExists, "Git repository already exists in the provided path"));
-    }
-
     // Proceed with the repository initialization
     let status = Command::new("git")
         .arg("init")

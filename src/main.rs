@@ -149,7 +149,7 @@ async fn main() {
             }
         },
         "cat" => {
-            if args.len() == 2 {
+            if args.len() == 3 {
                 match cat(&path) {
                     Ok(content) => println!("{}", content),
                     Err(_) => println!("Error: Failed to read file"),
