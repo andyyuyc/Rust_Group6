@@ -108,7 +108,10 @@ async fn main() {
         "checkout" => {
             if args.len() == 3 {
                 match checkout_cmd(&args[2]) {
-                    Ok(_) => println!("Successfully checked out {}", &args[2]),
+                    Ok(_) => {
+                        // clear_staged_files(repo_path)?;
+                        println!("Successfully checked out {}", &args[2])
+                    },
                     Err(e) => println!("Error: {}", e),
                 }
             } else {
@@ -252,6 +255,12 @@ async fn main() {
                 println!("Correct usage: dvcs push <remote_path>");
             }
         },
+        "help" => {
+            println!(
+                "Commands: "
+
+            )
+        }
         _ => println!("Unknown command"),
     }
 }

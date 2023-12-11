@@ -157,6 +157,7 @@ fn get_common_ancestor(file_system: &RepositoryInterface, commit1: &Commit, comm
     Err(io::Error::new(io::ErrorKind::NotFound, "No common ancestor found"))
 }
 
+/// Merges the other branch into the current one
 pub fn merge_cmd(other_branch: &str) -> std::io::Result<()> {
     // Initialize repository
     let curr_path = std::env::current_dir()?;
