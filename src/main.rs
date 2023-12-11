@@ -3,6 +3,7 @@ use std::{io, fs};
 use std::io::Error;
 
 use errorhandling::error_handling::errorhandling;
+use initialization::clone;
 use inter_repo_interactions::pull_push::{pull, push};
 use revisions::staging::{stage_remove, clear_staged_files};
 use state_management::checkout::checkout_cmd;
@@ -34,14 +35,6 @@ pub mod inter_repo_interactions;
 
 use std::io::{Write, stdin, stdout, ErrorKind};
 use std::env;
-
-// main.rs
-use tokio::runtime;
-// mod clone;
-// mod status;
-// mod errorhandling;
-
-// pub fn main() {}
 
 //this 
 fn directory_path(path: &PathBuf) -> Directory {
@@ -91,16 +84,7 @@ async fn main() {
 
     match args[1].as_str() {
         "init" => {},
-        "clone" => {
-            if args.len() == 3 {
-                match clone_local(&path_as_str, &args[2]) {
-                    Ok(_) => println!("Successfully clone to local"),
-                    Err(_) => println!("Failed to clone. Might lack permissions"),
-                }
-            } else {
-                println!("Correct Usage: dvcs clone <other-dir>")
-            }
-        },
+        "clone" => clone::clone(),
         "errorhandling" => {
             errorhandling::error_handling::errorhandling();
         },
