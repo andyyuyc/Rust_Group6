@@ -1,6 +1,8 @@
 use crate::{file_management::{hash::{Hash, DVCSHash}, directory::{Directory, BlobRef}, commit::{Commit, self}}, interface::io::RepositoryInterface};
 use std::{io::{self, Error}, collections::{HashSet, VecDeque}};
 
+use super::checkout::checkout;
+
 pub fn merge(file_system: &RepositoryInterface, commit1: Commit, commit2: Commit) -> io::Result<Directory> { 
     // Find a common ancestor
     let parent_commit = get_common_ancestor(&file_system, &commit1, &commit2)?;
@@ -190,11 +192,14 @@ pub fn merge_cmd(other_branch: &str) -> std::io::Result<()> {
     // Update branch head 
     let branch = repo.get_branch_from_hash(merge_into_hash.clone())
         .ok_or(Error::new(io::ErrorKind::Other, "Failed to retrieve branch hash"))?;
-    repo.update_branch_head(&branch, merge_into_hash)
+    repo.update_branch_head(&branch, commit.get_hash())
         .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to update branch head to merge commit"))?;
 
-    // // Update the repo head NOT NECESSARY SINCE THE HEAD DOES NOT CHANGE
-    // repo.update_current_head(&branch);
+    // Update the repo head
+    repo.update_current_head(&branch);
+
+    // Checkout to that hash 
+    checkout(repo, commit)?;
 
     Ok(())
 }
