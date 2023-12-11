@@ -125,7 +125,9 @@ pub fn merge(file_system: &RepositoryInterface, commit1: Commit, commit2: Commit
                     merged_dir.insert_file_ref(&path, ref1.clone());
                     Ok(merged_dir)
                 },
-                (_, _, _) => Ok(merged_dir)
+                (_, _, _) => {
+                    Ok(merged_dir)
+                }
             }
         })
 }
@@ -160,10 +162,6 @@ pub fn merge_cmd(other_branch: &str) -> std::io::Result<()> {
         .ok_or(Error::new(io::ErrorKind::Other, "Directory is not a repo"))?;
 
     // Get the branch you are merging into
-    // let merge_into_hash = repo.get_current_head()
-    //     .ok_or(Error::new(io::ErrorKind::Other, "Failed to retrieve current head"))?;
-    // let merge_into = repo.get_serialized_object(merge_into_hash.clone())
-    //     .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to retrieve target branch"))?;
     let merge_into_branch = repo.get_current_head()
         .ok_or(Error::new(io::ErrorKind::Other, "Failed to retrieve current head"))?;
     let merge_into_hash = repo.get_hash_from_branch(&merge_into_branch)
