@@ -109,7 +109,7 @@ async fn main() {
             if args.len() == 3 {
                 match checkout_cmd(&args[2]) {
                     Ok(_) => {
-                        // clear_staged_files(repo_path)?;
+                        clear_staged_files(&PathBuf::from(path_as_str));
                         println!("Successfully checked out {}", &args[2])
                     },
                     Err(e) => println!("Error: {}", e),
@@ -156,7 +156,10 @@ async fn main() {
         "merge" => {
             if args.len() == 3 {
                 match merge_cmd(&args[2]) {
-                    Ok(_) => println!("Successfully merged"),
+                    Ok(_) => {
+                        clear_staged_files(&PathBuf::from(path_as_str));
+                        println!("Successfully merged")
+                    },
                     Err(e) => println!("Error: {}", e),
                 }
             } else {
@@ -256,11 +259,25 @@ async fn main() {
             }
         },
         "help" => {
-            println!(
-                "Commands: "
-
-            )
-        }
+            println!("DVCS Help - List of Commands and Usage:");
+            println!("init - Initialize a new repository: dvcs init");
+            println!("clone - Clone a repository: dvcs clone <repo_path>");
+            println!("status - Check the status of the repository: dvcs status");
+            println!("checkout - Switch branches: dvcs checkout <branch-name>");
+            println!("commit - Record changes to the repository: dvcs commit <message>");
+            println!("branch - Creates branches: dvcs branch <branch_name>");
+            println!("heads - List all branches: dvcs heads");
+            println!("merge - Join two or more development histories together: dvcs merge <other-branch>");
+            println!("add - Add file contents to the staging area: dvcs add <file_path> | dvcs add *");
+            println!("remove - Remove files from the staging area: dvcs remove <file_path> | dvcs remove *");
+            println!("cat - Display the contents of a file based on its hash: dvcs cat <commit-hash> <file-name>");
+            println!("diff - Show changes between commits, commit and working tree, etc: dvcs diff <dir1> <dir2>");
+            println!("log - Show commit logs: dvcs log");
+            println!("pull - Fetch from and integrate with another repository: dvcs pull <remote_path>");
+            println!("push - Update remote refs along with associated objects: dvcs push <remote_path>");
+            println!("errorhandling - Handle errors: dvcs errorhandling");
+            println!("Note: Replace the placeholders like <branch-name>, <file_path>, etc., with actual values.");
+        },        
         _ => println!("Unknown command"),
     }
 }
