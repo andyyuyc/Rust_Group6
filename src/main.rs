@@ -2,9 +2,9 @@ use std::{path::PathBuf};
 use std::{io, fs};
 use std::io::Error;
 
-use errorhandling::error_handling::errorhandling;
 use initialization::clone;
 use inter_repo_interactions::pull_push::{pull, push};
+use interface::error_handling::errorhandling;
 use revisions::staging::{stage_remove, clear_staged_files};
 use state_management::checkout::checkout_cmd;
 use status_check::log::{dvcs_log, log};
@@ -29,7 +29,6 @@ pub mod revisions;
 pub mod view;
 pub mod initialization;
 pub mod status_check;
-pub mod errorhandling;
 pub mod inter_repo_interactions;
 
 
@@ -86,7 +85,7 @@ async fn main() {
         "init" => {},
         "clone" => clone::clone(),
         "errorhandling" => {
-            errorhandling::error_handling::errorhandling();
+            errorhandling()
         },
         "status" => {
             if args.len() == 2 {
