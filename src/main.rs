@@ -14,6 +14,7 @@ use state_management::{merge::{merge, merge_cmd}, branch::{get_branches_cmd, cre
 use view::cat::cat;
 use inter_repo_interaction::{pull_push::{pull, push}};
 use crate::status::track_status;
+use crate::initialization::clone;
 
 use crate::{file_management::{commit::commit, hash::DVCSHash}, state_management::checkout::checkout};
 use crate::revisions::staging;
@@ -81,16 +82,7 @@ async fn main() {
                 Err(_) => println!("Failed to initialize repo"),
             };
         },
-        "clone" => {
-            if args.len() == 3 {
-                match clone_local(&path_as_str, &args[2]) {
-                    Ok(_) => println!("Successfully clone to local"),
-                    Err(_) => println!("Failed to clone"),
-                }
-            } else {
-                println!("Correct Usage: dvcs clone <other-dir>")
-            }
-        },
+        "clone" => clone::clone(),
 
         "errorhandling" => errorhandling::errorhandling::errorhandling(),
 
