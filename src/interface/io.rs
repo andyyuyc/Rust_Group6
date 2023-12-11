@@ -1,4 +1,4 @@
-use std::{io::{self, Write, Read}, fs::{File, OpenOptions}, path::PathBuf};
+use std::{io::{self, Write, Read}, fs::{File, OpenOptions}, path::{PathBuf, Path}};
 use serde::{Serialize, de::DeserializeOwned, Deserialize};
 use crate::file_management::{hash::Hash, directory::{Directory, BlobRef}};
 use crate::file_management::hash::DVCSHash;
@@ -55,8 +55,6 @@ impl RepositoryInterface {
         // Get file path
         let relative_path = Self::get_relative_obj_path(hash);
         let path = self.dir_path.join(&relative_path);
-
-        println!("{}", &path.display());
 
         if !path.exists() {
             // Create directory for prefix if nonexistant
@@ -177,7 +175,7 @@ impl RepositoryInterface {
         // If the branch exists, update it
         if branch_path.exists() {
             let mut file = File::create(branch_path)?;
-            file.write_all(new_hash.as_string().as_bytes());
+            file.write_all(new_hash.as_string().as_bytes())?;
             return Ok(())
         }
 
@@ -294,14 +292,28 @@ impl RepositoryInterface {
 
     /// Clears the directory
     pub fn clear_directory(&self) -> io::Result<()> {
-        let entries = std::fs::read_dir(&self.dir_path)?;
+        Self::clear_directory_helper(&self.dir_path)
+            .map_err(|_| io::Error::new(io::ErrorKind::NotFound, "Failed to clear dir"))?;
 
+        Ok(())
+    }
+
+    fn clear_directory_helper<P: AsRef<Path>>(dir_path: P) -> io::Result<()> {
+        let entries = std::fs::read_dir(dir_path.as_ref())?;
+    
         for entry in entries {
             let entry = entry?;
             let path = entry.path();
+
+            if path.components().any(|x| x.as_os_str() == ".my-dvcs") {
+                continue;
+            }
     
-            if path.is_file() {
-                std::fs::remove_file(path)?;
+            if path.is_dir() {
+                Self::clear_directory_helper(&path)?; // Recursively clear the directory
+                std::fs::remove_dir(&path)?;   // Then remove the directory itself
+            } else if path.is_file() {
+                std::fs::remove_file(&path)?;   // Remove file
             }
         }
     

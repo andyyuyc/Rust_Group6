@@ -25,10 +25,10 @@ pub fn checkout(file_system: RepositoryInterface, commit: Commit) -> io::Result<
 
             // Reconstruct the directory structure
             std::fs::create_dir_all(&dir_path.parent().unwrap())?;
-            
+
             // Recreate the file and copy the data to it
-            let dir_path = file_system.get_repo_path().join(&dir_path);
-            let mut file = File::create(&dir_path)?;
+            let directory_path = file_system.get_repo_path().join(&dir_path);
+            let mut file = File::create(&directory_path)?;
             file.write_all(&data)?;
             file.flush()?;
 
@@ -52,7 +52,7 @@ pub fn checkout_cmd(branch_name: &str) -> std::io::Result<()> {
 
     // Checkout to the head commit
     checkout(repo, commit)
-        .map_err(|_| Error::new(io::ErrorKind::Other, "Failed to check out files"))
+        .map_err(|x| x)
 }
 
 

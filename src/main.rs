@@ -139,7 +139,7 @@ async fn main() {
                 let msg = &args[2];
                 match commit_cmd(&msg, "You") {
                     Ok(commit) => match dvcs_log(&commit) {
-                        Ok(_) => {},
+                        Ok(_) => println!("Successfully commited"),
                         Err(_) => println!("Failed to update log"),
                     },
                     Err(e) => println!("Error: {}", e),
