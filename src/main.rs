@@ -16,6 +16,7 @@ use interface::io::RepositoryInterface;
 use revisions::{staging::{stage_add, stage_all_files}, status};
 use state_management::{merge::{merge, merge_cmd}, branch::{get_branches_cmd, create_branch_cmd}};
 use view::cat::cat_cmd;
+use permission::permission::verify_permissions;
 
 use crate::{file_management::{commit::commit, hash::DVCSHash}, state_management::checkout::checkout};
 use crate::revisions::staging;
@@ -30,6 +31,7 @@ pub mod initialization;
 pub mod status_check;
 pub mod errorhandling;
 pub mod inter_repo_interactions;
+pub mod permission;
 
 
 use std::io::{Write, stdin, stdout, ErrorKind};
@@ -103,6 +105,26 @@ async fn main() {
         },
         "errorhandling" => {
             errorhandling::error_handling::errorhandling();
+        },
+        "permission" => {
+            if args.len() == 4 {
+                let user = &args[2];
+                let file_path = &args[3];
+                let permission_input = prompt_input("Enter permission (Read, Write, Execute): ");
+                let permission = match Permission::from_str(&permission_input) {
+                    Ok(p) => p,
+                    Err(_) => {
+                        println!("Invalid permission");
+                        return;
+                    },
+                };
+                match verify_permissions(user, file_path, permission) {
+                    Ok(()) => println!("Permission granted for {} on {}", user, file_path),
+                    Err(e) => println!("Permission denied: {}", e),
+                }
+            } else {
+                println!("Correct Usage: dvcs permission <user> <file-path>");
+            }
         },
         "status" => {
             if args.len() == 2 {
