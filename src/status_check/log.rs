@@ -58,7 +58,6 @@ pub fn log() -> io::Result<()> {
 }
 
 
-
 #[cfg(test)]
 mod log_tests {
     use super::*;

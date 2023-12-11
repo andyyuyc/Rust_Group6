@@ -16,7 +16,6 @@ use interface::io::RepositoryInterface;
 use revisions::{staging::{stage_add, stage_all_files}, status};
 use state_management::{merge::{merge, merge_cmd}, branch::{get_branches_cmd, create_branch_cmd}};
 use view::cat::cat_cmd;
-
 use crate::{file_management::{commit::commit, hash::DVCSHash}, state_management::checkout::checkout};
 use crate::revisions::staging;
 
@@ -70,7 +69,7 @@ async fn main() {
     let args: Vec<String> = std::env::args().collect();
     let path = std::env::current_dir().unwrap_or(PathBuf::from("."));
     let path_as_str = &path.as_os_str().to_string_lossy().to_string();
-
+    
     if args.len() < 2 {
         println!("Usage: dvcs <command>");
         return;
@@ -83,6 +82,7 @@ async fn main() {
         };
     }
 
+    
     // Fixes the case where the methods are called without a repo
     if RepositoryInterface::new(&path).is_none() {
         println!("Not a repo. Do dvcs init to initialize");
@@ -237,25 +237,19 @@ async fn main() {
             }
         },
         "pull" => {
-            if args.len() == 3 {
-                let remote_path = &args[2];
-                match pull(remote_path, &path_as_str) {
-                    Ok(_) => println!("Successfully pulled from remote"),
-                    Err(e) => println!("Error during pull: {}", e),
-                }
-            } else {
-                println!("Correct usage: dvcs pull <remote_path>");
+            let remote_path = &args[2];
+            let local_path = &args[3];
+
+            if let Err(e) = pull(remote_path, local_path) {
+                println!("Error during pull: {}", e);
             }
         },
         "push" => {
-            if args.len() == 3 {
-                let remote_path = &args[2];
-                match push(&path_as_str, remote_path) {
-                    Ok(_) => println!("Successfully pushed to remote"),
-                    Err(e) => println!("Error during push: {}", e),
-                }
-            } else {
-                println!("Correct usage: dvcs push <remote_path>");
+            let remote_path = &args[3];
+            let local_path = &args[2];
+
+            if let Err(e) = push(local_path, remote_path) {
+                println!("Error during push: {}", e);
             }
         },
         _ => println!("Unknown command"),

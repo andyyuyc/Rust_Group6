@@ -4,26 +4,6 @@ use std::path::Path;
 use std::collections::HashSet;
 
 
-pub fn get_paths(action: &str) -> (String, String) {
-    let mut first_path = String::new();
-    let mut second_path = String::new();
-
-    if action == "pull" {
-        println!("Enter the remote path:");
-        stdin().read_line(&mut first_path).expect("Failed to read remote path");
-        println!("Enter the local path:");
-        stdin().read_line(&mut second_path).expect("Failed to read destination path");
-    } else {
-        println!("Enter the local path:");
-        stdin().read_line(&mut first_path).expect("Failed to read local path");
-        println!("Enter the remote path:");
-        stdin().read_line(&mut second_path).expect("Failed to read destination path");
-    }
-
-    (first_path.trim().to_string(), second_path.trim().to_string())
-}
-
-
 fn detect_changes(source_lines: &[Vec<u8>], dest_lines: &[Vec<u8>], is_pull_operation: bool) -> bool {
     if is_pull_operation {
         !dest_lines.iter().all(|line| source_lines.contains(line))
@@ -85,6 +65,11 @@ pub fn pull(remote_path: &str, local_path: &str) -> io::Result<()> {
         let source_file = Path::new(remote_path).join(&file_name);
         let dest_file = Path::new(local_path).join(&file_name);
 
+         // Check if the entry is a file
+         if !source_file.is_file() {
+            continue;
+        }
+
         if Path::exists(&dest_file) {
             if synchronize_changes(source_file.to_str().unwrap(), dest_file.to_str().unwrap(), true)? {
                 conflict_occurred = true;
@@ -101,7 +86,6 @@ pub fn pull(remote_path: &str, local_path: &str) -> io::Result<()> {
         println!("Pull completed.");
     }
 
-
     Ok(())
 }
 
@@ -116,8 +100,13 @@ pub fn push(local_path: &str, remote_path: &str) -> io::Result<()> {
         let source_file = Path::new(local_path).join(&file_name);
         let dest_file = Path::new(remote_path).join(&file_name);
 
+         // Check if the entry is a file
+         if !source_file.is_file() {
+            continue;
+        }
+        
         if Path::exists(&dest_file) {
-            if synchronize_changes(source_file.to_str().unwrap(), dest_file.to_str().unwrap(), true)? {
+            if synchronize_changes(source_file.to_str().unwrap(), dest_file.to_str().unwrap(), false)? {
                 conflict_occurred = true;
                 break;
             }

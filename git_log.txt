@@ -1,0 +1,185 @@
+commit 0afb0898fdbd4225859260492aeec903027350cf
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sun Dec 10 17:23:38 2023 -0500
+
+    Prototype
+
+commit 46d6fbfa54145744339391b5503b67a0a63243ad
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sun Dec 10 17:07:16 2023 -0500
+
+    Updated log to append to the top
+
+commit e0573f650f38c20ba700a0247b6cabdf1aead814
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sun Dec 10 16:58:16 2023 -0500
+
+    Made it so you cant call commands before inits
+
+commit d7660efb0bcbc2e770e10773019def0dd3c37fc6
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sun Dec 10 16:29:21 2023 -0500
+
+    Actually fixed heads this time
+
+commit 2dc0ba98836b21746ffaf2448057314baf4b441b
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sun Dec 10 16:25:59 2023 -0500
+
+    Fixed bug with updating the heads command
+
+commit 98f297465378ce04b52fec04549f7e350fc311f9
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sun Dec 10 16:22:22 2023 -0500
+
+    Made it so heads tells you what the current branch is
+
+commit 6c82664dfa7c85b432f3d4f039ec96bf92965f07
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sun Dec 10 16:11:16 2023 -0500
+
+    Fixed bug where an empty repo when committing wouldn't update head
+
+commit d49abd86489fec0b0685e509aaf677cb760e5f57
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sun Dec 10 16:03:28 2023 -0500
+
+    EXTREMELY EXPERIMENTAL- CHANGED HEAD FROM HASH TO BRANCH POINTER
+
+commit e952ac498464bb5b3fa052c2e18b8a10fe69a86e
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sun Dec 10 04:10:51 2023 -0500
+
+    Verified cat works
+
+commit 2570d3ddebe6213ac2fdeb8bdbb05419a14bdde5
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sun Dec 10 04:04:46 2023 -0500
+
+    Modified cat but don't know if it works
+
+commit f68f55d6122b7af72385ae8279181443fda6a55a
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sun Dec 10 03:33:25 2023 -0500
+
+    Fixed cat so it displays the proper file
+
+commit 5ba14741a930d55779175e1373399ef152634d3a
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sun Dec 10 03:23:10 2023 -0500
+
+    Renamed branch with 0 args as head
+
+commit 011aab1c0e966cd9451fd1d2c01ffca6ec816c62
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sun Dec 10 03:18:19 2023 -0500
+
+    Updated stage * so that it works properly
+
+commit 76c27cece6af52e7347985a5d9ae2093ba8ac473
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sun Dec 10 02:46:56 2023 -0500
+
+    Updated displaying branches so that it displays only the name
+
+commit 3017ecb752df67efd4b7b89fc8302e2f365f7658
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sun Dec 10 00:14:54 2023 -0500
+
+    Added log to main
+
+commit ba3499b699c3470fdfc6580104d0a7a56852be82
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sat Dec 9 23:14:17 2023 -0500
+
+    Fixed number of args for cat
+
+commit 03c3de4f306ab4bf6b1ad26ad56441db1c53131d
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sat Dec 9 22:13:12 2023 -0500
+
+    Added diff
+
+commit 9cee150b9bfc525888e896e7ad34cb9bf4310545
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sat Dec 9 21:54:35 2023 -0500
+
+    Prototype?
+
+commit f1ce570b91416d4eec4246e5a84d45eb04137c74
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sat Dec 9 20:49:33 2023 -0500
+
+    Added a lot of random stuff
+
+commit 280bc85c2afda2e2e2420befd926736107cad63e
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sat Dec 9 04:04:26 2023 -0500
+
+    Fixed minor bugs and implemented commit and checkout commands
+
+commit 6300492d4d00282eec42dc5a3fe3ca8f4519c09b
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Fri Dec 8 21:16:31 2023 -0500
+
+    Fixed bug in io where rel_path was used instead of path in add_object()
+
+commit 3fbee224a5134565090794984a67d699341fc734
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Fri Dec 8 19:39:53 2023 -0500
+
+    Finished merge
+
+commit b1e3d49eb1274b67e21276e7fb8e2705e7526535
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Thu Dec 7 19:43:30 2023 -0500
+
+    Baseline
+
+commit e9fcf7a72748b51891237c214211868f01f42fd1
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Thu Dec 7 19:33:23 2023 -0500
+
+    Baseline
+
+commit f6e7f240755a53d0e86d44afeb0f24850ef95cef
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Mon Dec 4 21:29:21 2023 -0500
+
+    Rewrote io.rs so it supports any path
+
+commit f3011fd2fe735a8073be0ab694e7457f9a08441d
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sat Dec 2 14:02:41 2023 -0500
+
+    Working version
+
+commit 796a1d058606b2fd55fc5d0ef4d2a452ad91d1be
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sat Dec 2 14:01:23 2023 -0500
+
+    Working version before branch
+
+commit 62b158155acf85238f3fbe02cff974a1c64cf4fb
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Mon Nov 27 12:59:56 2023 -0500
+
+    Added prototype testing to main
+
+commit d331f7ed8a994d973a16580d5cd03de652d9d9db
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sat Nov 18 16:23:27 2023 -0500
+
+    Implemented commit
+
+commit 20f64a13145efe891d52a95c295a29ff5f6ae8bd
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Sat Nov 18 15:49:50 2023 -0500
+
+    Before testing checkout
+
+commit 3bb390580de6dca4fd8f20f5cde76c296f5843f9
+Author: Pushyboy <jwong47@u.rochester.edu>
+Date:   Fri Nov 17 12:12:09 2023 -0500
+
+    Initial commit
