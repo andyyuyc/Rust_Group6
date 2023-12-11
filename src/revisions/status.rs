@@ -3,7 +3,7 @@ use std::fs::{self, File};
 use std::io::{self, Read};
 use std::path::Path;
 
-use walkdir::WalkDir;
+use walkdir::{WalkDir, DirEntry};
 
 pub fn track_status(repo_path: &Path) -> io::Result<(HashSet<String>, HashSet<String>)> {
     let mut tracked_files = HashSet::new();
@@ -22,7 +22,7 @@ pub fn track_status(repo_path: &Path) -> io::Result<(HashSet<String>, HashSet<St
     for entry in WalkDir::new(repo_path)
         .into_iter()
         .filter_map(|e| e.ok())
-        .filter(|e| e.path().is_file()) 
+        .filter(|e| e.path().is_file() && is_excluded(e)) 
     {
         let path = entry.path();
         let relative_path = path.strip_prefix(repo_path).unwrap().to_str().unwrap().to_string();
@@ -32,4 +32,12 @@ pub fn track_status(repo_path: &Path) -> io::Result<(HashSet<String>, HashSet<St
     }
 
     Ok((tracked_files, untracked_files))
+}
+
+// Excludes .my-dvcs from being added to the staging area
+fn is_excluded(entry: &DirEntry) -> bool {
+    entry.file_name()
+        .to_str()
+        .map(|s| s.starts_with(".my-dvcs"))
+        .unwrap_or(false)
 }
