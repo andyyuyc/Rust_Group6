@@ -238,8 +238,8 @@ async fn main() {
         },
         "pull" => {
             if args.len() == 3 {
-                let remote_path = &args[2];
-                match pull(remote_path, &path_as_str) {
+                let (remote_path, local_path) = get_paths("pull");
+                match pull(&remote_path, &local_path) {
                     Ok(_) => println!("Successfully pulled from remote"),
                     Err(e) => println!("Error during pull: {}", e),
                 }
@@ -249,8 +249,8 @@ async fn main() {
         },
         "push" => {
             if args.len() == 3 {
-                let remote_path = &args[2];
-                match push(&path_as_str, remote_path) {
+                let (local_path, remote_path) = get_paths("push");
+                match push(&local_path, &remote_path) {
                     Ok(_) => println!("Successfully pushed to remote"),
                     Err(e) => println!("Error during push: {}", e),
                 }
