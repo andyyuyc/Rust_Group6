@@ -16,7 +16,7 @@ use initialization::{init::init, clone::clone_local};
 use interface::io::RepositoryInterface;
 use revisions::{staging::{stage_add, stage_all_files}, status};
 use state_management::{merge::{merge, merge_cmd}, branch::{get_branches_cmd, create_branch_cmd}};
-use view::cat::cat_cmd;
+use status_check::cat::cat_cmd;
 
 use crate::{file_management::{commit::commit, hash::DVCSHash}, state_management::checkout::checkout};
 use crate::revisions::staging;
@@ -26,11 +26,9 @@ pub mod interface;
 pub mod state_management;
 pub mod tracking;
 pub mod revisions;
-pub mod view;
 pub mod initialization;
 pub mod status_check;
 pub mod inter_repo_interactions;
-
 
 use std::io::{Write, stdin, stdout, ErrorKind};
 use std::env;
