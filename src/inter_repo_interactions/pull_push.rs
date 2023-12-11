@@ -4,7 +4,7 @@ use std::path::Path;
 use std::collections::HashSet;
 
 
-fn get_paths(action: &str) -> (String, String) {
+pub fn get_paths(action: &str) -> (String, String) {
     let mut first_path = String::new();
     let mut second_path = String::new();
 
