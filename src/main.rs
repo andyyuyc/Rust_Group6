@@ -13,6 +13,7 @@ use revisions::{staging::{stage_add, stage_remove, stage_all_files}, status};
 use state_management::{merge::{merge, merge_cmd}, branch::{get_branches_cmd, create_branch_cmd}};
 use view::cat::cat;
 use inter_repo_interaction::{pull_push::{pull, push}};
+use crate::status::track_status;
 
 use crate::{file_management::{commit::commit, hash::DVCSHash}, state_management::checkout::checkout};
 use crate::revisions::staging;
@@ -94,6 +95,8 @@ async fn main() {
         "errorhandling" => errorhandling::errorhandling::errorhandling(),
 
         "status" => {
+            let repo_path = Path::new("."); // 当前目录作为仓库根目录
+            let status = track_status(repo_path);
             match status::track_status(&path) {
                 Ok((tracked, untracked)) => {
                     println!("Tracked files:");
