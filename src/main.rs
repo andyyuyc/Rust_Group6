@@ -260,7 +260,7 @@ async fn main() {
         },
         "pull" => {
             if args.len() == 3 {
-                let (remote_path, local_path) = get_paths("pull");
+                let remote_path = 
                 match pull(&remote_path, &local_path) {
                     Ok(_) => println!("Successfully pulled from remote"),
                     Err(e) => println!("Error during pull: {}", e),

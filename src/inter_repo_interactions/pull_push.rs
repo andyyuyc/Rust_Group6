@@ -4,25 +4,13 @@ use std::path::Path;
 use std::collections::HashSet;
 
 
-pub fn get_paths(action: &str) -> (String, String) {
-    let mut first_path = String::new();
-    let mut second_path = String::new();
-
+pub fn get_paths(action: &str, local_path: &str, remote_path: &str) -> (String, String) {
     if action == "pull" {
-        println!("Enter the remote path:");
-        stdin().read_line(&mut first_path).expect("Failed to read remote path");
-        println!("Enter the local path:");
-        stdin().read_line(&mut second_path).expect("Failed to read destination path");
+        (remote_path.to_string(), local_path.to_string())
     } else {
-        println!("Enter the local path:");
-        stdin().read_line(&mut first_path).expect("Failed to read local path");
-        println!("Enter the remote path:");
-        stdin().read_line(&mut second_path).expect("Failed to read destination path");
+        (local_path.to_string(), remote_path.to_string())
     }
-
-    (first_path.trim().to_string(), second_path.trim().to_string())
 }
-
 
 fn detect_changes(source_lines: &[Vec<u8>], dest_lines: &[Vec<u8>], is_pull_operation: bool) -> bool {
     if is_pull_operation {
